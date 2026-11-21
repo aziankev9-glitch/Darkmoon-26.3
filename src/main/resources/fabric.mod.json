@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"darkmoon","version":"${version}","name":"Darkmoon Lite","description":"Minimal vanilla-style client utilities","environment":"client","entrypoints":{"client":["dev.darkmoon.DarkmoonClient"]},"depends":{"fabricloader":">=0.20.1","minecraft":"~26.3","java":">=25","fabric-api":"*"}}
