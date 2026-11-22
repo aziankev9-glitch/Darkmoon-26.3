@@ -165,7 +165,7 @@ public class MainActivity extends Activity {
  bonus.setText("🎁 Бесплатных вращений: "+free[0]);spin.setText("🎁 БЕСПЛАТНО · "+free[0]);spin.postDelayed(()->{if(!running[0]&&spin.isAttachedToWindow())spin.performClick();},900);
  }).show();
  }catch(Exception e){Toast.makeText(this,"Введите ставку от 1 000 до 150 000 ₽",Toast.LENGTH_SHORT).show();}});
- if(free[0]>0){bonusActive[0]=true;bonus.setText("🎁 Бесплатных вращений: "+free[0]);spin.setText("🎁 БЕСПЛАТНО · "+free[0]);}
+ if(free[0]>0){bonusActive[0]=true;bonus.setText("🎁 Бесплатных вращений: "+free[0]);spin.setText("🎁 БЕСПЛАТНО · "+free[0]);spin.postDelayed(()->{if(!running[0]&&spin.isAttachedToWindow())spin.performClick();},1000);}
  final String[] symbols={"МОПС","ТАКСА","КОСТЬ","ОШЕЙНИК","РОТВЕЙЛЕР","A","K","Q","J","БУДКА","WILD\n2×","WILD\n3×"};
  final int[][] lines={{1,1,1,1,1},{0,0,0,0,0},{2,2,2,2,2},{0,1,2,1,0},{2,1,0,1,2},{0,0,1,2,2},{2,2,1,0,0},{1,0,0,0,1},{1,2,2,2,1},{0,1,1,1,0},{2,1,1,1,2},{1,0,1,2,1},{1,2,1,0,1},{0,1,0,1,0},{2,1,2,1,2},{0,2,0,2,0},{2,0,2,0,2},{0,1,2,2,2},{2,1,0,0,0},{1,1,0,1,1}};
  spin.setOnClickListener(v->{if(running[0])return;try{
