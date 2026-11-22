@@ -116,7 +116,47 @@ public class MainActivity extends Activity {
   }
  }
 
- void playSlotSound(int type){try{android.media.ToneGenerator tone=new android.media.ToneGenerator(android.media.AudioManager.STREAM_MUSIC,65);int sound=type==1?android.media.ToneGenerator.TONE_PROP_BEEP2:android.media.ToneGenerator.TONE_PROP_ACK;tone.startTone(sound,type==1?130:250);new Handler(Looper.getMainLooper()).postDelayed(()->tone.release(),500);}catch(Exception ignored){}}
+ void playSlotSound(int type){
+ new Thread(()->{
+  android.media.AudioTrack track=null;
+  try{
+   final int rate=22050;final double length=type==1?0.55:1.35;
+   int count=(int)(rate*length);short[] pcm=new short[count];java.util.Random noise=new java.util.Random();
+   for(int i=0;i<count;i++){
+    double t=i/(double)rate,signal=0;
+    if(type==1){
+     // Two short, throaty cartoon dog barks.
+     for(int bark=0;bark<2;bark++){
+      double dt=t-bark*.25;
+      if(dt>=0&&dt<.19){
+       double env=Math.pow(Math.sin(Math.PI*dt/.19),1.4);
+       double pitch=185-95*dt/.19;
+       signal+=env*(.58*Math.sin(2*Math.PI*pitch*dt)+.24*Math.sin(2*Math.PI*2.05*pitch*dt)+.16*(noise.nextDouble()*2-1));
+      }
+     }
+    }else{
+     // A bright cascade of falling coins with overlapping metallic chimes.
+     for(int coin=0;coin<13;coin++){
+      double dt=t-coin*.087;
+      if(dt>=0&&dt<.25){
+       double f=840+(coin%5)*185;
+       double env=Math.exp(-dt*20);
+       signal+=.24*env*(Math.sin(2*Math.PI*f*dt)+.38*Math.sin(2*Math.PI*f*2.37*dt)+.18*Math.sin(2*Math.PI*f*3.91*dt));
+      }
+     }
+    }
+    pcm[i]=(short)(Math.max(-1,Math.min(1,signal))*18000);
+   }
+   int bytes=pcm.length*2;
+   track=new android.media.AudioTrack(android.media.AudioManager.STREAM_MUSIC,rate,
+     android.media.AudioFormat.CHANNEL_OUT_MONO,android.media.AudioFormat.ENCODING_PCM_16BIT,
+     Math.max(bytes,android.media.AudioTrack.getMinBufferSize(rate,android.media.AudioFormat.CHANNEL_OUT_MONO,android.media.AudioFormat.ENCODING_PCM_16BIT)),
+     android.media.AudioTrack.MODE_STATIC);
+   track.write(pcm,0,pcm.length);track.play();
+   Thread.sleep((long)(length*1000)+80);
+  }catch(Exception ignored){}finally{if(track!=null){try{track.stop();}catch(Exception ignored){}track.release();}}
+ },"DogSlotSound").start();
+}
  void slot(){
  heading("🐾 СОБАЧИЙ ДВОР · 20 ЛИНИЙ");
  LinearLayout header=panel();
