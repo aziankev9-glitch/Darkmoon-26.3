@@ -49,7 +49,7 @@ public class MainActivity extends Activity {
  button("Продолжить",()->{String digits=phone.getText().toString().replaceAll("[^0-9]","");if(digits.length()!=11||(digits.charAt(0)!='7'&&digits.charAt(0)!='8')){phone.setError("Нужен номер из 11 цифр");return;}if(banks.getSelectedItemPosition()==0){Toast.makeText(this,"Выбери банк",Toast.LENGTH_SHORT).show();return;}double value;try{value=Double.parseDouble(amount.getText().toString().replace(',','.'));}catch(Exception e){amount.setError("Укажи сумму");return;}if(!Double.isFinite(value)||value<=0||value>balance){amount.setError("Неверная сумма");return;}final double sum=Math.round(value*100)/100.0;if(sum<.01){amount.setError("Минимум 0,01 ₽");return;}String bank=banks.getSelectedItem().toString();String number=phone.getText().toString();((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(amount.getWindowToken(),0);amount.clearFocus();confirmTransfer(bank,number,sum);});
  }
  void edit(String title,boolean nickname){EditText input=new EditText(this);input.setSingleLine(true);input.setText(nickname?nick:owner);new AlertDialog.Builder(this).setTitle(title).setView(input).setNegativeButton("Отмена",null).setPositiveButton("Сохранить",(d,w)->{String v=input.getText().toString().trim();if(!v.isEmpty()){if(nickname)nick=v;else owner=v;save();show("Профиль");}}).show();}
- void profile(){heading("Профиль");LinearLayout p=panel();line(p,owner,"@"+nick);button("✎ Изменить имя и фамилию",()->edit("Имя и фамилия",false));button("✎ Изменить никнейм",()->edit("Никнейм",true));LinearLayout note=panel();line(note,"Жухлый Банк 4.2","Тестовая версия. Все данные хранятся локально.");button("Сбросить тестовые операции",()->new AlertDialog.Builder(this).setTitle("Сбросить историю и баланс?").setNegativeButton("Отмена",null).setPositiveButton("Сбросить",(d,w)->{balance=17280480.50;history.clear();save();show("Главная");}).show());}
+ void profile(){heading("Профиль");LinearLayout p=panel();line(p,owner,"@"+nick);button("✎ Изменить имя и фамилию",()->edit("Имя и фамилия",false));button("✎ Изменить никнейм",()->edit("Никнейм",true));LinearLayout note=panel();line(note,"Жухлый Банк 4.3","Тестовая версия. Все данные хранятся локально.");button("Сбросить тестовые операции",()->new AlertDialog.Builder(this).setTitle("Сбросить историю и баланс?").setNegativeButton("Отмена",null).setPositiveButton("Сбросить",(d,w)->{balance=17280480.50;history.clear();save();show("Главная");}).show());}
  void services(){heading("Платежи и сервисы");String[] names={"Мобильная связь","ЖКХ и коммунальные услуги","Перевод за границу","Акции компаний"};String[] desc={"Пополнение телефона","Счета за квартиру и услуги","Международные переводы","Виртуальный инвестиционный портфель"};for(int i=0;i<names.length;i++){final String n=names[i];LinearLayout p=panel();line(p,n,desc[i]);p.setOnClickListener(v->service(n));}}
  void service(String name){heading(name);if(name.equals("Акции компаний")){String[] stocks={"Яндекс · YDEX","Сбер · SBER","Газпром · GAZP","Лукойл · LKOH"};for(String st:stocks){LinearLayout p=panel();line(p,st,"Добавить в виртуальный портфель");p.setOnClickListener(v->new AlertDialog.Builder(this).setTitle(st).setMessage("Учебный инвестиционный портфель. Реальные акции не приобретаются.").setPositiveButton("Добавить",(d,w)->{history.add(0,"Акции: "+st+" · виртуальный портфель");save();Toast.makeText(this,"Добавлено",Toast.LENGTH_SHORT).show();}).setNegativeButton("Отмена",null).show());}return;}
  EditText recipient=field(name.equals("Мобильная связь")?"Номер телефона":"Номер счёта / получатель",1);EditText amount=field("Сумма, ₽",8194);button("Продолжить",()->{double value;try{value=Double.parseDouble(amount.getText().toString().replace(',','.'));}catch(Exception e){amount.setError("Укажи сумму");return;}if(recipient.length()==0||!Double.isFinite(value)||value<=0||value>balance){Toast.makeText(this,"Проверь данные",Toast.LENGTH_SHORT).show();return;}final double sum=Math.round(value*100)/100.0;new AlertDialog.Builder(this).setTitle(name).setMessage("Получатель: "+recipient.getText()+"\nСумма: "+rub(sum)+"\n\nВиртуальный платёж. Реальные средства не списываются.").setNegativeButton("Отмена",null).setPositiveButton("Подтвердить",(d,w)->{balance-=sum;history.add(0,name+" · −"+rub(sum));cashback+=(int)Math.floor(sum*.01);save();show("История");}).show();});}
@@ -100,19 +100,20 @@ public class MainActivity extends Activity {
    }else{
     int fur=symbol==0?0xffdcb988:symbol==1?0xffc57d4a:symbol==2?0xffe8d4a3:symbol==3?0xfff3ebdf:0xff5d3430;
     int dark=symbol==4?0xff241d1b:0xff855032;
-    oval(50,71,33,35,fur);
-    oval(20,50,14,24,dark);oval(80,50,14,24,dark);
-    if(symbol==3){oval(22,69,12,27,0xffe5c2d2);oval(78,69,12,27,0xffe5c2d2);}
-    oval(50,78,21,19,symbol==4?0xff9c6a4e:0xfff2e0cb);
-    oval(36,65,9,12,0xffffffff);oval(64,65,9,12,0xffffffff);
-    circle(38,66,5,0xff1e151c);circle(62,66,5,0xff1e151c);
-    circle(39,64,2,0xffffffff);circle(63,64,2,0xffffffff);
-    oval(50,82,9,6,0xff23151b);
-    oval(50,93,10,5,0xff4c1729);oval(50,97,5,7,0xffff799b);
-    if(symbol==0){oval(50,73,19,18,0xff6a3f35);oval(50,84,14,9,0xffd3ae93);}
-    if(symbol==4){poly(0xffffffff,40,91,45,91,43,96);poly(0xffffffff,55,91,60,91,57,96);}
-    if(symbol==2){text("✦",50,31,18,0xffffc55e);}
-    if(symbol==3){text("♥",50,33,18,0xffff67b9);}
+    // Distinct breeds instead of the same face with recolored fur.
+    oval(50,94,33,15,dark);
+    if(symbol==0){oval(50,64,35,34,0xffe1c08c);oval(18,55,13,24,0xff774a37);oval(82,55,13,24,0xff774a37);oval(50,80,23,21,0xff664238);oval(50,87,17,11,0xffe3bda3);}
+    if(symbol==1){oval(50,64,27,34,0xffc2814d);oval(18,65,12,34,0xff8b4a2c);oval(82,65,12,34,0xff8b4a2c);oval(50,82,18,20,0xffe3b184);}
+    if(symbol==2){oval(50,63,34,35,0xfff1d19a);oval(16,61,16,28,0xffb67b46);oval(84,61,16,28,0xffb67b46);oval(50,84,22,20,0xffffe4bb);}
+    if(symbol==3){for(int i=0;i<8;i++){double angle=i*Math.PI/4;circle(50+(float)Math.cos(angle)*26,64+(float)Math.sin(angle)*26,13,0xffe8e5e0);}oval(50,65,29,31,0xfff6f3ee);oval(19,63,13,25,0xffe5c3d0);oval(81,63,13,25,0xffe5c3d0);oval(50,84,19,17,0xffffffff);}
+    if(symbol==4){oval(50,64,35,34,0xff282428);oval(18,55,13,24,0xff171517);oval(82,55,13,24,0xff171517);oval(35,54,12,9,0xffb77743);oval(65,54,12,9,0xffb77743);oval(50,82,21,19,0xffbc855c);}
+    oval(36,67,10,12,0xfffefaf3);oval(64,67,10,12,0xfffefaf3);
+    circle(38,68,5,0xff21191c);circle(62,68,5,0xff21191c);circle(40,66,2,0xffffffff);circle(64,66,2,0xffffffff);
+    oval(50,83,10,7,0xff272023);oval(50,92,9,5,0xff5a2932);oval(50,97,5,7,0xffff7e9a);
+    if(symbol==0){oval(40,78,3,2,0xff4a302c);oval(60,78,3,2,0xff4a302c);}
+    if(symbol==2)text("✦",50,27,17,0xffffdf73);
+    if(symbol==3)text("♥",50,27,17,0xffff67b9);
+    if(symbol==4){poly(0xffffffff,40,91,45,91,43,97);poly(0xffffffff,55,91,60,91,57,97);}
    }
    c.restore();
   }
@@ -159,6 +160,27 @@ public class MainActivity extends Activity {
   }catch(Exception ignored){}finally{if(track!=null){try{track.stop();}catch(Exception ignored){}track.release();}}
  },"DogSlotSound").start();
 }
+ static class BoneView extends View {
+  android.graphics.Paint p=new android.graphics.Paint(3);long start=android.os.SystemClock.uptimeMillis();boolean playing=true;String title,amount;
+  BoneView(Context ctx,String t,String a){super(ctx);title=t;amount=a;setLayerType(View.LAYER_TYPE_SOFTWARE,null);}
+  void drawText(android.graphics.Canvas c,String t,float x,float y,int size,int color){p.setColor(color);p.setTypeface(android.graphics.Typeface.create("sans-serif-black",1));p.setTextSize(size);p.setTextAlign(android.graphics.Paint.Align.CENTER);p.setStyle(android.graphics.Paint.Style.FILL);c.drawText(t,x,y,p);}
+  @Override protected void onDraw(android.graphics.Canvas canvas){super.onDraw(canvas);android.graphics.Canvas c=canvas;c.save();c.scale(getWidth()/360f,getHeight()/350f);float t=(android.os.SystemClock.uptimeMillis()-start)/1000f;
+   p.setShader(new android.graphics.LinearGradient(0,0,360,350,0xff6b2058,0xff180e36,android.graphics.Shader.TileMode.CLAMP));c.drawRect(0,0,360,350,p);p.setShader(null);
+   for(int i=0;i<46;i++){float x=(i*83%367)+(float)Math.sin(t*2+i)*13;float y=350-((i*71+t*(70+i%6*17))%430);c.save();c.translate(x,y);c.rotate(t*160+i*40);float radius=5+i%5;p.setColor(i%3==0?0xffffe35a:0xffffa52e);c.drawOval(-radius,-radius*1.2f,radius,radius*1.2f,p);p.setColor(0xffffefab);p.setStyle(android.graphics.Paint.Style.STROKE);p.setStrokeWidth(1.3f);c.drawOval(-radius+2,-radius*1.2f+2,radius-2,radius*1.2f-2,p);p.setStyle(android.graphics.Paint.Style.FILL);c.restore();}
+   drawText(c,title,180,72,title.length()>17?23:29,0xffffd95d);drawText(c,"✦     ✨     ✦",180,110,25,0xffffe67a);
+   c.save();c.translate(180,190);float pulse=1+.04f*(float)Math.sin(t*4);c.scale(pulse,pulse);p.setShadowLayer(14,0,6,0xffe28b2c);p.setColor(0xffdfad67);c.drawRoundRect(-110,-48,110,48,24,24,p);for(int x:new int[]{-110,110})for(int y:new int[]{-34,34})c.drawCircle(x,y,28,p);p.clearShadowLayer();p.setColor(0xfffff0ce);c.drawRoundRect(-107,-44,107,44,24,24,p);for(int x:new int[]{-107,107})for(int y:new int[]{-32,32})c.drawCircle(x,y,25,p);drawText(c,amount,0,10,amount.length()>17?18:amount.length()>13?22:28,0xff9b311e);c.restore();c.restore();if(playing)postInvalidateDelayed(33);
+  }
+ }
+ void showBoneWin(String title,double amount,String button){
+  Dialog dialog=new Dialog(this);final android.media.AudioTrack[] sound={null};
+  LinearLayout layout=new LinearLayout(this);layout.setOrientation(1);layout.setBackground(shape(0xff201234,20));
+  BoneView art=new BoneView(this,title,rub(amount));layout.addView(art,new LinearLayout.LayoutParams(-1,dp(350)));
+  TextView claim=txt(button,18,0xffffffff,true);claim.setGravity(Gravity.CENTER);pad(claim,10,17,10,17);claim.setBackground(shape(RED,17));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.setMargins(dp(18),0,dp(18),dp(18));layout.addView(claim,lp);
+  dialog.setContentView(layout);dialog.setCancelable(false);claim.setOnClickListener(v->dialog.dismiss());
+  dialog.setOnDismissListener(d->{art.playing=false;if(sound[0]!=null){try{sound[0].stop();}catch(Exception ignored){}sound[0].release();sound[0]=null;}});
+  dialog.show();Window window=dialog.getWindow();if(window!=null){window.setBackgroundDrawableResource(android.R.color.transparent);window.setLayout(getResources().getDisplayMetrics().widthPixels-dp(24),-2);}
+  try{int rate=22050,count=rate*2;short[] pcm=new short[count];Random random=new Random(49);for(int i=0;i<count;i++){double t=i/(double)rate,v=0;for(int j=0;j<29;j++){double dt=t-j*.068;if(dt>=0&&dt<.23){double f=680+(j%9)*147;v+=.14*Math.exp(-dt*22)*(Math.sin(2*Math.PI*f*dt)+.4*Math.sin(2*Math.PI*f*2.32*dt)+.13*(random.nextDouble()*2-1));}}pcm[i]=(short)(Math.max(-1,Math.min(1,v))*17000);}int min=android.media.AudioTrack.getMinBufferSize(rate,android.media.AudioFormat.CHANNEL_OUT_MONO,android.media.AudioFormat.ENCODING_PCM_16BIT);android.media.AudioTrack track=new android.media.AudioTrack(android.media.AudioManager.STREAM_MUSIC,rate,android.media.AudioFormat.CHANNEL_OUT_MONO,android.media.AudioFormat.ENCODING_PCM_16BIT,Math.max(min,count*2),android.media.AudioTrack.MODE_STATIC);track.write(pcm,0,count);track.setLoopPoints(0,count,-1);sound[0]=track;track.play();}catch(Exception ignored){}
+ }
  void slot(){
  heading("🐾 СОБАЧИЙ ДВОР · 20 ЛИНИЙ");
  LinearLayout header=panel();
@@ -225,8 +247,8 @@ public class MainActivity extends Activity {
  if(isFree)bonusTotal[0]+=won;
  if(isFree){int stuck=0;for(int[] rr:sticky)for(int id:rr)if(id>0)stuck++;bonus.setText("🏠 Закреплено будок: "+stuck+" · осталось вращений: "+free[0]);}won=Math.round(won*100)/100.0;balance+=won;history.add(0,"Собачий двор · "+(isFree?"бонус":"ставка "+rub(bet))+" · выигрыш "+rub(won));save();funds.setText("Игровой баланс: "+rub(balance));status.setText(won>0?"🏆 ВЫИГРЫШ "+rub(won):"Без выигрыша · следующий спин");if(won>=wager*15){status.setText("✦ МЕГАВЫИГРЫШ ✦ "+rub(won));status.setTextSize(21);status.setTextColor(0xffffdf75);status.setScaleX(.7f);status.setScaleY(.7f);status.animate().scaleX(1f).scaleY(1f).setDuration(650).setInterpolator(new android.view.animation.OvershootInterpolator()).start();}else{status.setTextSize(14);status.setTextColor(0xffffd58a);}spin.setText(free[0]>0?"🎁 БЕСПЛАТНО · "+free[0]:"▶  КРУТИТЬ");spin.setEnabled(true);running[0]=false;
  if(won>0){int bestDog=-1;for(int y=0;y<3;y++)for(int x=0;x<5;x++)if(result[y][x]>=0&&result[y][x]<=4)bestDog=Math.max(bestDog,result[y][x]);if(bestDog>=0){for(int y=0;y<3;y++)for(int x=0;x<5;x++)if(result[y][x]==bestDog){SlotSymbolView dog=cells[y][x];dog.animate().scaleX(1.16f).scaleY(1.16f).setDuration(220).withEndAction(()->dog.animate().scaleX(1f).scaleY(1f).setDuration(250).start()).start();}}playSlotSound(bestDog>=0?1:2);}
- if(won>=wager*15){playSlotSound(2);Dialog winDialog=new Dialog(this);LinearLayout celebration=new LinearLayout(this);celebration.setOrientation(1);celebration.setGravity(Gravity.CENTER);pad(celebration,22,35,22,35);celebration.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff842b51,0xff2a174d,0xff5b1a43}));TextView shine=txt("✦  ✨  ✦",42,0xffffd15e,true);shine.setGravity(Gravity.CENTER);add(celebration,shine);TextView headline=txt(won>=wager*50?"СУПЕРВЫИГРЫШ!":"МЕГАВЫИГРЫШ!",26,0xffffdf75,true);headline.setGravity(Gravity.CENTER);add(celebration,headline);TextView reward=txt(rub(won),34,WHITE,true);reward.setGravity(Gravity.CENTER);pad(reward,0,20,0,20);add(celebration,reward);TextView done=txt("ПРОДОЛЖИТЬ",17,WHITE,true);done.setGravity(Gravity.CENTER);pad(done,0,14,0,14);done.setBackground(shape(RED,16));add(celebration,done);done.setOnClickListener(q->winDialog.dismiss());winDialog.setContentView(celebration);winDialog.show();Window window=winDialog.getWindow();if(window!=null){window.setBackgroundDrawableResource(android.R.color.transparent);window.setLayout(getResources().getDisplayMetrics().widthPixels-dp(30),-2);}reward.setScaleX(.3f);reward.setScaleY(.3f);reward.animate().scaleX(1f).scaleY(1f).setDuration(800).setInterpolator(new android.view.animation.OvershootInterpolator()).start();shine.animate().rotationBy(360).setDuration(1400).start();}
- if(isFree&&free[0]==0){bonusActive[0]=false;for(int[] rr:sticky)Arrays.fill(rr,0);bonus.setText("🏆 Бонусный раунд завершён · "+rub(bonusTotal[0]));final double total=bonusTotal[0];handler.postDelayed(()->{if(!spin.isAttachedToWindow())return;playSlotSound(2);new AlertDialog.Builder(this).setTitle("🏆 ИТОГ БОНУСНОЙ ИГРЫ").setMessage("Общий выигрыш за все вращения:\n"+rub(total)).setPositiveButton("ЗАБРАТЬ ВЫИГРЫШ",(d,w)->{}).show();},500);}if(free[0]>0)handler.postDelayed(()->{if(!running[0]&&spin.isAttachedToWindow())spin.performClick();},won>=wager*15?3600:1000);
+ if(won>=wager*15&&!isFree){showBoneWin(won>=wager*50?"СУПЕРВЫИГРЫШ!":"МЕГАВЫИГРЫШ!",won,"ЗАБРАТЬ ВЫИГРЫШ");}
+ if(isFree&&free[0]==0){bonusActive[0]=false;for(int[] rr:sticky)Arrays.fill(rr,0);bonus.setText("🏆 Бонусный раунд завершён · "+rub(bonusTotal[0]));final double total=bonusTotal[0];handler.postDelayed(()->{if(!spin.isAttachedToWindow())return;showBoneWin("ИТОГ БОНУСА!",total,"ЗАБРАТЬ ВЫИГРЫШ");},650);}if(free[0]>0)handler.postDelayed(()->{if(!running[0]&&spin.isAttachedToWindow())spin.performClick();},won>=wager*15?3600:1000);
  },2200);
  }catch(Exception e){Toast.makeText(this,"Проверь ставку и баланс",Toast.LENGTH_SHORT).show();}});
  }
