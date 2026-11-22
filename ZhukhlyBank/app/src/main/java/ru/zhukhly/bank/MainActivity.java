@@ -131,7 +131,7 @@ public class MainActivity extends Activity {
  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(78),1);lp.setMargins(dp(2),dp(3),dp(2),dp(3));row.addView(cell,lp);cells[y][x]=cell;
  }}
  TextView status=txt("🐕 Совпадения слева направо · 3–5 символов",14,0xffffd58a,true);status.setGravity(Gravity.CENTER);add(body,status);
- TextView bonus=txt("🏠 Три домика запускают 8 бесплатных вращений",12,MUTED,false);bonus.setGravity(Gravity.CENTER);add(body,bonus);
+ TextView bonus=txt("🏠 Три лапы на барабанах 1, 3, 5 запускают бонус",12,MUTED,false);bonus.setGravity(Gravity.CENTER);add(body,bonus);
  EditText stake=field("Ставка 1 000–150 000 ₽",8194);
  final int[] stakeValues={1000,5000,10000,100000,150000};
  stake.setText(String.valueOf(getPreferences(0).getInt("dogStake",1000)));
@@ -148,7 +148,7 @@ public class MainActivity extends Activity {
 
  TextView spin=txt("▶  КРУТИТЬ",21,0xffffffff,true);spin.setGravity(Gravity.CENTER);pad(spin,12,18,12,18);spin.setBackground(shape(RED,20));add(body,spin);
  TextView rules=txt("Игровая симуляция: 20 линий, символы WILD, множители и бонусные вращения. Собственная таблица выплат, не оригинальная математика Pragmatic Play.",11,MUTED,false);pad(rules,0,16,0,0);add(body,rules);
- final int[] free={getPreferences(0).getInt("dogFree",0)};final double[] bonusBet={Double.longBitsToDouble(getPreferences(0).getLong("dogBonusBet",Double.doubleToLongBits(1000)))};final boolean[] running={false};final Random rng=new Random();
+ final int[] free={getPreferences(0).getInt("dogFree",0)};final double[] bonusBet={Double.longBitsToDouble(getPreferences(0).getLong("dogBonusBet",Double.doubleToLongBits(1000)))};final boolean[] running={false};final Random rng=new Random();final int[][] sticky=new int[3][5];final boolean[] bonusActive={false};
  TextView buy=txt("🎁  КУПИТЬ БОНУС · ставка × 100",16,0xffffdf8a,true);
  buy.setGravity(Gravity.CENTER);pad(buy,12,17,12,17);buy.setBackground(shape(0xff68345c,18));add(body,buy);
  buy.setOnClickListener(v->{if(running[0])return;try{
@@ -157,31 +157,31 @@ public class MainActivity extends Activity {
  double cost=bet*100;
  if(cost>balance){Toast.makeText(this,"Недостаточно виртуальных средств: нужно "+rub(cost),Toast.LENGTH_LONG).show();return;}
  new AlertDialog.Builder(this).setTitle("Купить бонусный раунд?")
- .setMessage("Ставка: "+rub(bet)+"\\nСтоимость: "+rub(cost)+" (100×)\\n8 бесплатных вращений. Только виртуальные средства.")
+ .setMessage("Ставка: "+rub(bet)+"\nСтоимость: "+rub(cost)+" (100×)\\n9–27 бесплатных вращений. Только виртуальные средства.")
  .setNegativeButton("Отмена",null).setPositiveButton("Купить",(d,w)->{
- balance-=cost;free[0]+=8;bonusBet[0]=bet;getPreferences(0).edit().putInt("dogFree",free[0]).putLong("dogBonusBet",Double.doubleToLongBits(bet)).apply();
+ balance-=cost;free[0]=9+rng.nextInt(19);bonusActive[0]=true;for(int[] rr:sticky)Arrays.fill(rr,0);bonusBet[0]=bet;getPreferences(0).edit().putInt("dogFree",free[0]).putLong("dogBonusBet",Double.doubleToLongBits(bet)).apply();
  history.add(0,"Покупка игрового бонуса · "+rub(cost));save();
  funds.setText("Игровой баланс: "+rub(balance));
  bonus.setText("🎁 Бесплатных вращений: "+free[0]);spin.setText("🎁 БЕСПЛАТНО · "+free[0]);spin.postDelayed(()->{if(!running[0]&&spin.isAttachedToWindow())spin.performClick();},900);
  }).show();
  }catch(Exception e){Toast.makeText(this,"Введите ставку от 1 000 до 150 000 ₽",Toast.LENGTH_SHORT).show();}});
- if(free[0]>0){bonus.setText("🎁 Бесплатных вращений: "+free[0]);spin.setText("🎁 БЕСПЛАТНО · "+free[0]);}
+ if(free[0]>0){bonusActive[0]=true;bonus.setText("🎁 Бесплатных вращений: "+free[0]);spin.setText("🎁 БЕСПЛАТНО · "+free[0]);}
  final String[] symbols={"МОПС","ТАКСА","КОСТЬ","ОШЕЙНИК","РОТВЕЙЛЕР","A","K","Q","J","БУДКА","WILD\n2×","WILD\n3×"};
  final int[][] lines={{1,1,1,1,1},{0,0,0,0,0},{2,2,2,2,2},{0,1,2,1,0},{2,1,0,1,2},{0,0,1,2,2},{2,2,1,0,0},{1,0,0,0,1},{1,2,2,2,1},{0,1,1,1,0},{2,1,1,1,2},{1,0,1,2,1},{1,2,1,0,1},{0,1,0,1,0},{2,1,2,1,2},{0,2,0,2,0},{2,0,2,0,2},{0,1,2,2,2},{2,1,0,0,0},{1,1,0,1,1}};
  spin.setOnClickListener(v->{if(running[0])return;try{
  double bet=Double.parseDouble(stake.getText().toString().replace(',','.'));
  if(!Double.isFinite(bet)||bet<1000||bet>150000||(free[0]==0&&bet>balance))throw new Exception();
- boolean isFree=free[0]>0;if(isFree){free[0]--;}else balance-=bet;final double wager=isFree?bonusBet[0]:bet;getPreferences(0).edit().putInt("dogFree",free[0]).apply();save();running[0]=true;spin.setEnabled(false);status.setText(isFree?"🎁 Бесплатное вращение":"🎰 Барабаны вращаются…");
+ boolean isFree=free[0]>0;if(isFree){free[0]--;bonusActive[0]=true;}else{bonusActive[0]=false;for(int[] rr:sticky)Arrays.fill(rr,0);balance-=bet;}final double wager=isFree?bonusBet[0]:bet;getPreferences(0).edit().putInt("dogFree",free[0]).apply();save();running[0]=true;spin.setEnabled(false);status.setText(isFree?"🎁 Бесплатное вращение":"🎰 Барабаны вращаются…");
  int[][] result=new int[3][5];Handler handler=new Handler(Looper.getMainLooper());
- for(int x=0;x<5;x++){final int col=x;for(int frame=0;frame<13+3*x;frame++){final int fr=frame;handler.postDelayed(()->{for(int y=0;y<3;y++)cells[y][col].setSymbol(rng.nextInt(symbols.length));},frame*55L+col*140L);}
- handler.postDelayed(()->{for(int y=0;y<3;y++){int k=rng.nextInt(100);int id=k<4?10:k<7?11:k<12?9:rng.nextInt(9);result[y][col]=id;cells[y][col].setSymbol(id);cells[y][col].setAlpha(.55f);cells[y][col].animate().alpha(1f).setDuration(360).start();cells[y][col].setScaleX(0.86f);cells[y][col].setScaleY(0.86f);cells[y][col].animate().scaleX(1f).scaleY(1f).setDuration(220).start();}},(13+3*x)*55L+col*140L+30);}
+ for(int x=0;x<5;x++){final int col=x;for(int frame=0;frame<13+3*x;frame++){final int fr=frame;handler.postDelayed(()->{for(int y=0;y<3;y++)cells[y][col].setSymbol(isFree&&sticky[y][col]>0?sticky[y][col]:(col==0||col==4?rng.nextInt(9):rng.nextInt(symbols.length)));},frame*55L+col*140L);}
+ handler.postDelayed(()->{for(int y=0;y<3;y++){int k=rng.nextInt(100);int id=isFree&&sticky[y][col]>0?sticky[y][col]:isFree?(col>=1&&col<=3&&k<25?(k<13?10:11):rng.nextInt(9)):(col==0||col==4?(k<8?9:rng.nextInt(9)):(k<10?10:k<18?11:k<24&&col==2?9:rng.nextInt(9)));if(isFree&&col>=1&&col<=3&&(id==10||id==11))sticky[y][col]=id;result[y][col]=id;cells[y][col].setSymbol(id);cells[y][col].setAlpha(.55f);cells[y][col].animate().alpha(1f).setDuration(360).start();cells[y][col].setScaleX(0.86f);cells[y][col].setScaleY(0.86f);cells[y][col].animate().scaleX(1f).scaleY(1f).setDuration(220).start();}},(13+3*x)*55L+col*140L+30);}
  handler.postDelayed(()->{
- double won=0;for(int[] line:lines){int target=-1,count=0,mult=1;for(int col=0;col<5;col++){int symbol=result[line[col]][col];if(symbol==10||symbol==11){mult*=symbol==10?2:3;count++;continue;}if(target==-1){target=symbol;count++;continue;}if(symbol==target)count++;else break;}
- if(count>=3&&target>=0&&target!=9){double pay=(count==3?2:count==4?6:16)*(target<4?3:target==4?5:1);won+=(wager/20.0)*pay*mult;}}
- int houses=0;for(int y=0;y<3;y++)for(int x=0;x<5;x++)if(result[y][x]==9)houses++;if(houses>=3){if(free[0]==0)bonusBet[0]=wager;free[0]+=8;getPreferences(0).edit().putLong("dogBonusBet",Double.doubleToLongBits(bonusBet[0])).apply();bonus.setText("🎁 Бонус! Бесплатных вращений: "+free[0]);}getPreferences(0).edit().putInt("dogFree",free[0]).apply();
- won=Math.round(won*100)/100.0;balance+=won;history.add(0,"Собачий двор · "+(isFree?"бонус":"ставка "+rub(bet))+" · выигрыш "+rub(won));save();funds.setText("Игровой баланс: "+rub(balance));status.setText(won>0?"🏆 ВЫИГРЫШ "+rub(won):"Без выигрыша · следующий спин");if(won>=wager*15){status.setText("✦ МЕГАВЫИГРЫШ ✦ "+rub(won));status.setTextSize(21);status.setTextColor(0xffffdf75);status.setScaleX(.7f);status.setScaleY(.7f);status.animate().scaleX(1f).scaleY(1f).setDuration(650).setInterpolator(new android.view.animation.OvershootInterpolator()).start();}else{status.setTextSize(14);status.setTextColor(0xffffd58a);}spin.setText(free[0]>0?"🎁 БЕСПЛАТНО · "+free[0]:"▶  КРУТИТЬ");spin.setEnabled(true);running[0]=false;
+ double won=0;for(int[] line:lines){int target=-1,count=0,mult=0;for(int col=0;col<5;col++){int symbol=result[line[col]][col];if(symbol==10||symbol==11){mult+=symbol==10?2:3;count++;continue;}if(target==-1){target=symbol;count++;continue;}if(symbol==target)count++;else break;}
+ if(count>=3&&target>=0&&target!=9){double pay=(count==3?2:count==4?6:16)*(target<4?3:target==4?5:1);won+=(wager/20.0)*pay*(mult==0?1:mult);}}
+ int houses=0;for(int x:new int[]{0,2,4})for(int y=0;y<3;y++)if(result[y][x]==9){houses++;break;}if(!isFree&&houses==3){bonusBet[0]=wager;free[0]=9+rng.nextInt(19);bonusActive[0]=true;for(int[] rr:sticky)Arrays.fill(rr,0);won+=wager*5;getPreferences(0).edit().putLong("dogBonusBet",Double.doubleToLongBits(bonusBet[0])).apply();bonus.setText("🎁 Бонус! Бесплатных вращений: "+free[0]);}getPreferences(0).edit().putInt("dogFree",free[0]).apply();
+ if(isFree){int stuck=0;for(int[] rr:sticky)for(int id:rr)if(id>0)stuck++;bonus.setText("🏠 Закреплено будок: "+stuck+" · осталось вращений: "+free[0]);}won=Math.round(won*100)/100.0;balance+=won;history.add(0,"Собачий двор · "+(isFree?"бонус":"ставка "+rub(bet))+" · выигрыш "+rub(won));save();funds.setText("Игровой баланс: "+rub(balance));status.setText(won>0?"🏆 ВЫИГРЫШ "+rub(won):"Без выигрыша · следующий спин");if(won>=wager*15){status.setText("✦ МЕГАВЫИГРЫШ ✦ "+rub(won));status.setTextSize(21);status.setTextColor(0xffffdf75);status.setScaleX(.7f);status.setScaleY(.7f);status.animate().scaleX(1f).scaleY(1f).setDuration(650).setInterpolator(new android.view.animation.OvershootInterpolator()).start();}else{status.setTextSize(14);status.setTextColor(0xffffd58a);}spin.setText(free[0]>0?"🎁 БЕСПЛАТНО · "+free[0]:"▶  КРУТИТЬ");spin.setEnabled(true);running[0]=false;
  if(won>=wager*15){Dialog winDialog=new Dialog(this);LinearLayout celebration=new LinearLayout(this);celebration.setOrientation(1);celebration.setGravity(Gravity.CENTER);pad(celebration,22,35,22,35);celebration.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff842b51,0xff2a174d,0xff5b1a43}));TextView shine=txt("✦  ✨  ✦",42,0xffffd15e,true);shine.setGravity(Gravity.CENTER);add(celebration,shine);TextView headline=txt(won>=wager*50?"СУПЕРВЫИГРЫШ!":"МЕГАВЫИГРЫШ!",26,0xffffdf75,true);headline.setGravity(Gravity.CENTER);add(celebration,headline);TextView reward=txt(rub(won),34,WHITE,true);reward.setGravity(Gravity.CENTER);pad(reward,0,20,0,20);add(celebration,reward);TextView done=txt("ПРОДОЛЖИТЬ",17,WHITE,true);done.setGravity(Gravity.CENTER);pad(done,0,14,0,14);done.setBackground(shape(RED,16));add(celebration,done);done.setOnClickListener(q->winDialog.dismiss());winDialog.setContentView(celebration);winDialog.show();Window window=winDialog.getWindow();if(window!=null){window.setBackgroundDrawableResource(android.R.color.transparent);window.setLayout(getResources().getDisplayMetrics().widthPixels-dp(30),-2);}reward.setScaleX(.3f);reward.setScaleY(.3f);reward.animate().scaleX(1f).scaleY(1f).setDuration(800).setInterpolator(new android.view.animation.OvershootInterpolator()).start();shine.animate().rotationBy(360).setDuration(1400).start();}
- if(free[0]>0)handler.postDelayed(()->{if(!running[0]&&spin.isAttachedToWindow())spin.performClick();},won>=wager*15?3600:1000);
+ if(isFree&&free[0]==0){bonusActive[0]=false;for(int[] rr:sticky)Arrays.fill(rr,0);bonus.setText("🏆 Бонусный раунд завершён");}if(free[0]>0)handler.postDelayed(()->{if(!running[0]&&spin.isAttachedToWindow())spin.performClick();},won>=wager*15?3600:1000);
  },2200);
  }catch(Exception e){Toast.makeText(this,"Проверь ставку и баланс",Toast.LENGTH_SHORT).show();}});
  }
