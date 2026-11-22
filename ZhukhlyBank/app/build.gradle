@@ -2,15 +2,6 @@ plugins { id 'com.android.application' }
 android {
  namespace 'ru.zhukhly.bank'
  compileSdk 35
- signingConfigs {
-  demo {
-   storeFile file('demo-signing.jks')
-   storePassword 'demoOnly123'
-   keyAlias 'zhukhlydemo'
-   keyPassword 'demoOnly123'
-  }
- }
- buildTypes { debug { signingConfig signingConfigs.demo } }
  defaultConfig { applicationId 'ru.zhukhly.bank'; minSdk 26; targetSdk 35; versionCode 58; versionName '5.8' }
 }
 
