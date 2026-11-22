@@ -23,17 +23,19 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Restore stable demo signing key
-        uses: actions/cache@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: zhukhly-demo-signing-v1
-      - name: Create signing key if missing
+      - name: Restore signing key from repository secret
+        env:
+          SIGNING_KEY_B64: ${{ secrets.ZHUKHLY_SIGNING_KEY_B64 }}
         run: |
-          mkdir -p "$HOME/.android"
-          if [ ! -f "$HOME/.android/debug.keystore" ]; then
-            keytool -genkeypair -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Zhukhly Demo,O=Zhukhly,C=RU"
+          if [ -z "$SIGNING_KEY_B64" ]; then
+            echo "::error::Missing ZHUKHLY_SIGNING_KEY_B64. Configure a persistent signing key before publishing an APK."
+            exit 1
           fi
+          mkdir -p "$HOME/.android"
+          printf '%s' "$SIGNING_KEY_B64" | base64 -d > "$HOME/.android/debug.keystore"
+          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey >/dev/null
+      - name: Print signing certificate fingerprint
+        run: keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | grep SHA256
       - name: Build APK
         working-directory: ZhukhlyBank
         run: gradle --no-daemon --stacktrace :app:assembleDebug
