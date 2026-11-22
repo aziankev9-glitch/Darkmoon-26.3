@@ -72,17 +72,61 @@ public class MainActivity extends Activity {
  void showQrResult(String data){String value=data.length()>1500?data.substring(0,1500):data;new AlertDialog.Builder(this).setTitle("QR-код считан").setMessage("Содержимое:\n\n"+value+"\n\nДеньги не списываются.").setNegativeButton("Закрыть",null).setPositiveButton("Продолжить",(d,w)->service("Оплата по QR")).show();}
 
  void sites(){heading("Сайты и развлечения");LinearLayout p=panel();line(p,"🐶  Собачий домик","Игровой автомат · виртуальные ставки");button("Играть",()->slot());}
+
+ static class SlotSymbolView extends View {
+  int symbol=0; android.graphics.Paint p=new android.graphics.Paint(3); android.graphics.Canvas c; float w,h;
+  SlotSymbolView(Context ctx){super(ctx);setLayerType(View.LAYER_TYPE_SOFTWARE,null);}
+  void setSymbol(int id){symbol=id;invalidate();}
+  void fill(int color){p.setColor(color);p.setStyle(android.graphics.Paint.Style.FILL);p.clearShadowLayer();}
+  void oval(float x,float y,float rx,float ry,int color){fill(color);c.drawOval(x-rx,y-ry,x+rx,y+ry,p);}
+  void circle(float x,float y,float r,int color){fill(color);c.drawCircle(x,y,r,p);}
+  void rect(float x,float y,float ww,float hh,int color,float radius){fill(color);c.drawRoundRect(x,y,x+ww,y+hh,radius,radius,p);}
+  void poly(int color,float...xy){fill(color);android.graphics.Path path=new android.graphics.Path();path.moveTo(xy[0],xy[1]);for(int i=2;i<xy.length;i+=2)path.lineTo(xy[i],xy[i+1]);path.close();c.drawPath(path,p);}
+  void text(String t,float x,float y,float size,int color){fill(color);p.setTypeface(android.graphics.Typeface.create("sans-serif-black",1));p.setTextAlign(android.graphics.Paint.Align.CENTER);p.setTextSize(size);p.setShadowLayer(2,1,2,0xff572032);c.drawText(t,x,y,p);p.clearShadowLayer();}
+  @Override protected void onDraw(android.graphics.Canvas canvas){super.onDraw(canvas);c=canvas;w=getWidth();h=getHeight();c.save();c.scale(w/100f,h/112f);
+   rect(1,1,98,110,0xff4b175e,7);rect(4,4,92,104,0xff76267c,5);
+   if(symbol==9||symbol==10||symbol==11){
+    int mult=symbol==10?2:symbol==11?3:0;
+    poly(0xffffd66b,6,46,50,5,94,46,89,96,11,96);poly(0xffaa4426,11,45,50,12,89,45,85,92,15,92);
+    poly(0xffffb76d,16,46,50,18,84,46,80,88,20,88);
+    rect(27,47,46,44,0xff6a2c72,15);rect(32,51,36,36,0xff78c6dc,14);
+    if(mult>0){text(mult+"X",50,83,35,0xffffe522);}else{text("BONUS",50,83,17,0xffffeb56);}
+    for(int i=0;i<5;i++)circle(15+i*17,38,2,0xffffef9c);
+   }else if(symbol>=5&&symbol<=8){
+    int[] cs={0xffec3d4b,0xffffd445,0xffde48f0,0xff40c6ee};
+    text(new String[]{"A","K","Q","J"}[symbol-5],50,82,71,cs[symbol-5]);
+   }else{
+    int fur=symbol==0?0xffdcb988:symbol==1?0xffc57d4a:symbol==2?0xffe8d4a3:symbol==3?0xfff3ebdf:0xff5d3430;
+    int dark=symbol==4?0xff241d1b:0xff855032;
+    oval(50,71,33,35,fur);
+    oval(20,50,14,24,dark);oval(80,50,14,24,dark);
+    if(symbol==3){oval(22,69,12,27,0xffe5c2d2);oval(78,69,12,27,0xffe5c2d2);}
+    oval(50,78,21,19,symbol==4?0xff9c6a4e:0xfff2e0cb);
+    oval(36,65,9,12,0xffffffff);oval(64,65,9,12,0xffffffff);
+    circle(38,66,5,0xff1e151c);circle(62,66,5,0xff1e151c);
+    circle(39,64,2,0xffffffff);circle(63,64,2,0xffffffff);
+    oval(50,82,9,6,0xff23151b);
+    oval(50,93,10,5,0xff4c1729);oval(50,97,5,7,0xffff799b);
+    if(symbol==0){oval(50,73,19,18,0xff6a3f35);oval(50,84,14,9,0xffd3ae93);}
+    if(symbol==4){poly(0xffffffff,40,91,45,91,43,96);poly(0xffffffff,55,91,60,91,57,96);}
+    if(symbol==2){text("✦",50,31,18,0xffffc55e);}
+    if(symbol==3){text("♥",50,33,18,0xffff67b9);}
+   }
+   c.restore();
+  }
+ }
+
  void slot(){
  heading("🐾 СОБАЧИЙ ДВОР · 20 ЛИНИЙ");
  LinearLayout header=panel();
  header.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff744122,0xff281428}));
- line(header,"🏠 Собачий двор","5 барабанов · 3 ряда · WILD 2× и 3×");
+ line(header,"🐾 Собачий двор","5 барабанов · 3 ряда · бонусные будки и WILD");
  TextView funds=txt("Игровой баланс: "+rub(balance),17,0xffffd58a,true);add(header,funds);
  LinearLayout board=panel();board.setBackground(shape(0xff392037,22));
- TextView[][] cells=new TextView[3][5];
+ SlotSymbolView[][] cells=new SlotSymbolView[3][5];
  for(int y=0;y<3;y++){LinearLayout row=new LinearLayout(this);add(board,row);for(int x=0;x<5;x++){
- TextView cell=txt("МОПС",11,0xffffffff,true);cell.setGravity(Gravity.CENTER);
- GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xffe9b66b,0xff71346b});
+ SlotSymbolView cell=new SlotSymbolView(this);cell.setSymbol(0);
+ GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xffffd179,0xff71236e});
  bg.setCornerRadius(dp(12));bg.setStroke(dp(2),0xffffcf78);cell.setBackground(bg);cell.setShadowLayer(dp(2),0,dp(2),0xff54233a);
  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(78),1);lp.setMargins(dp(2),dp(3),dp(2),dp(3));row.addView(cell,lp);cells[y][x]=cell;
  }}
@@ -116,8 +160,8 @@ public class MainActivity extends Activity {
  if(!Double.isFinite(bet)||bet<1000||bet>150000||(free[0]==0&&bet>balance))throw new Exception();
  boolean isFree=free[0]>0;if(isFree){free[0]--;}else balance-=bet;final double wager=isFree?bonusBet[0]:bet;getPreferences(0).edit().putInt("dogFree",free[0]).apply();save();running[0]=true;spin.setEnabled(false);status.setText(isFree?"🎁 Бесплатное вращение":"🎰 Барабаны вращаются…");
  int[][] result=new int[3][5];Handler handler=new Handler(Looper.getMainLooper());
- for(int x=0;x<5;x++){final int col=x;for(int frame=0;frame<13+3*x;frame++){final int fr=frame;handler.postDelayed(()->{for(int y=0;y<3;y++)cells[y][col].setText(symbols[rng.nextInt(symbols.length)]);},frame*55L+col*140L);}
- handler.postDelayed(()->{for(int y=0;y<3;y++){int k=rng.nextInt(100);int id=k<4?10:k<7?11:k<12?9:rng.nextInt(9);result[y][col]=id;cells[y][col].setText(symbols[id]);cells[y][col].setTextSize(id<5?10:id>=10?12:24);cells[y][col].setTextColor(id>=10?0xffffe36e:id==9?0xffffe1a0:0xffffffff);cells[y][col].setScaleX(0.86f);cells[y][col].setScaleY(0.86f);cells[y][col].animate().scaleX(1f).scaleY(1f).setDuration(220).start();}},(13+3*x)*55L+col*140L+30);}
+ for(int x=0;x<5;x++){final int col=x;for(int frame=0;frame<13+3*x;frame++){final int fr=frame;handler.postDelayed(()->{for(int y=0;y<3;y++)cells[y][col].setSymbol(rng.nextInt(symbols.length));},frame*55L+col*140L);}
+ handler.postDelayed(()->{for(int y=0;y<3;y++){int k=rng.nextInt(100);int id=k<4?10:k<7?11:k<12?9:rng.nextInt(9);result[y][col]=id;cells[y][col].setSymbol(id);cells[y][col].setScaleX(0.86f);cells[y][col].setScaleY(0.86f);cells[y][col].animate().scaleX(1f).scaleY(1f).setDuration(220).start();}},(13+3*x)*55L+col*140L+30);}
  handler.postDelayed(()->{
  double won=0;for(int[] line:lines){int target=-1,count=0,mult=1;for(int col=0;col<5;col++){int symbol=result[line[col]][col];if(symbol==10||symbol==11){mult*=symbol==10?2:3;count++;continue;}if(target==-1){target=symbol;count++;continue;}if(symbol==target)count++;else break;}
  if(count>=3&&target>=0&&target!=9){double pay=(count==3?2:count==4?6:16)*(target<4?3:target==4?5:1);won+=(wager/20.0)*pay*mult;}}
