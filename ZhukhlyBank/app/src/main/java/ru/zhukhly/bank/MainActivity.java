@@ -1,81 +1,46 @@
 package ru.zhukhly.bank;
-
 import android.app.*;
-import android.os.Bundle;
+import android.os.*;
+import android.content.*;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.media.ToneGenerator;
-import android.media.AudioManager;
-import android.os.Handler;
-import android.os.Looper;
 import android.graphics.drawable.GradientDrawable;
+import android.media.*;
 import android.view.*;
 import android.widget.*;
 import java.util.*;
 
 public class MainActivity extends Activity {
-    final int RED=Color.rgb(211,35,52), DARK=Color.rgb(28,30,35), GREY=Color.rgb(110,114,121);
-    LinearLayout root, content, nav;
-    double balance=17280480.50;
-    String owner="Мурзин Эдуард Сергеевич";
-    ArrayList<String> history=new ArrayList<>();
-    int dp(float v){return (int)(v*getResources().getDisplayMetrics().density+.5f);}
-    GradientDrawable bg(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));return d;}
-    TextView text(String s,int size,int color,boolean bold){TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);if(bold)t.setTypeface(null,Typeface.BOLD);return t;}
-    void pad(View v,int a,int b,int c,int d){v.setPadding(dp(a),dp(b),dp(c),dp(d));}
-    void add(LinearLayout parent,View child){parent.addView(child,new LinearLayout.LayoutParams(-1,-2));}
-    @Override public void onCreate(Bundle b){super.onCreate(b);balance=Double.longBitsToDouble(getPreferences(0).getLong("balanceBits",Double.doubleToLongBits(17280480.50)));owner=getPreferences(0).getString("owner","Мурзин Эдуард Сергеевич");String saved=getPreferences(0).getString("history","");if(!saved.isEmpty())history.addAll(Arrays.asList(saved.split("\\n")));show("Главная");}
-    void persist(){getPreferences(0).edit().putLong("balanceBits",Double.doubleToLongBits(balance)).putString("owner",owner).putString("history",String.join("\n",history)).apply();}
-    String money(double n){return String.format(new Locale("ru","RU"),"%,.2f ₽",n);}
-    void show(String page){
-        root=new LinearLayout(this);root.setOrientation(1);root.setBackgroundColor(Color.rgb(247,247,249));setContentView(root);
-        LinearLayout header=new LinearLayout(this);header.setOrientation(1);pad(header,22,27,22,16);header.setBackgroundColor(Color.WHITE);
-        add(header,text("Ж  ЖУХЛЫЙ БАНК",22,RED,true));add(header,text("ТЕСТОВЫЙ РЕЖИМ · БЕЗ РЕАЛЬНЫХ ПЛАТЕЖЕЙ",10,GREY,true));add(root,header);
-        ScrollView sc=new ScrollView(this);root.addView(sc,new LinearLayout.LayoutParams(-1,0,1));content=new LinearLayout(this);content.setOrientation(1);pad(content,18,22,18,18);sc.addView(content);
-        if(page.equals("Главная"))home();else if(page.equals("История"))historyPage();else if(page.equals("Переводы"))transferPage();else if(page.equals("Карты"))cardsPage();else profilePage();
-        nav=new LinearLayout(this);nav.setBackgroundColor(Color.WHITE);String[] pages={"Главная","Карты","Переводы","История","Профиль"};for(String p:pages){TextView t=text(p,11,p.equals(page)?RED:GREY,p.equals(page));t.setGravity(Gravity.CENTER);pad(t,1,20,1,20);nav.addView(t,new LinearLayout.LayoutParams(0,-2,1));t.setOnClickListener(v->show(p));}add(root,nav);
-    }
-    void title(String s){TextView t=text(s,23,DARK,true);pad(t,0,0,0,18);add(content,t);}
-    void card(String name,String detail,int color){LinearLayout box=new LinearLayout(this);box.setOrientation(1);pad(box,20,20,20,20);box.setBackground(bg(color,20));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.bottomMargin=dp(14);content.addView(box,lp);add(box,text(name,17,Color.WHITE,true));TextView d=text(detail,25,Color.WHITE,true);pad(d,0,18,0,6);add(box,d);}
-    void action(String label,Runnable r){TextView b=text(label,16,Color.WHITE,true);b.setGravity(Gravity.CENTER);pad(b,14,16,14,16);b.setBackground(bg(RED,14));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.bottomMargin=dp(12);content.addView(b,lp);b.setOnClickListener(v->r.run());}
-    void info(String a,String b){LinearLayout box=new LinearLayout(this);box.setOrientation(1);pad(box,17,16,17,16);box.setBackground(bg(Color.WHITE,14));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.bottomMargin=dp(10);content.addView(box,lp);add(box,text(a,15,DARK,true));add(box,text(b,13,GREY,false));}
-    void home(){title("Привет, "+(owner.contains(" ")?owner.split(" ")[1]:owner)+"! 👋");card("Мой счёт",money(balance),RED);action("Перевести по СБП",()->show("Переводы"));action("История операций",()->show("История"));info("Быстрые платежи","Симуляция СБП с выбором банка и подтверждением.");}
-    void cardsPage(){title("Мои карты");card("ЖУХЛЫЙ · ТЕСТОВАЯ КАРТА","••••  2026",DARK);info("Виртуальная карта","Демонстрационная карта, не является платёжным средством.");}
-    void historyPage(){title("История операций");if(history.isEmpty())info("Операций пока нет","Сделай тестовый перевод — он появится здесь.");for(String h:history)info(h,"Демо · без реального перевода");}
-    void transferPage(){
-        title("Перевод по СБП");
-        info("Тестовый режим","Переводы выполняются только внутри приложения, деньги не отправляются.");
-        EditText phone=new EditText(this);phone.setSingleLine(true);phone.setInputType(3);phone.setHint("+7 999 123-45-67");add(content,phone);
-        Spinner bank=new Spinner(this);
-        String[] banks={"Выберите банк","СберБанк","Т-Банк","Альфа-Банк","ВТБ","Газпромбанк","Озон Банк","Райффайзенбанк","Другой банк"};
-        ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,banks);bank.setAdapter(adapter);add(content,bank);
-        EditText amount=new EditText(this);amount.setInputType(8194);amount.setHint("Сумма перевода, ₽");add(content,amount);
-        action("Продолжить",()->{
-            String digits=phone.getText().toString().replaceAll("[^0-9]","");
-            if(digits.length()!=11||(digits.charAt(0)!='7'&&digits.charAt(0)!='8')){phone.setError("Введите российский номер из 11 цифр");return;}
-            if(bank.getSelectedItemPosition()==0){Toast.makeText(this,"Выберите банк",Toast.LENGTH_SHORT).show();return;}
-            double n;
-            try{n=Double.parseDouble(amount.getText().toString().replace(',','.'));}catch(Exception e){amount.setError("Введите сумму");return;}
-            if(!Double.isFinite(n)||n<=0||n>balance){amount.setError("Некорректная сумма или недостаточно средств");return;}
-            double rounded=Math.round(n*100)/100.0;
-            if(rounded<=0){amount.setError("Минимум 0,01 ₽");return;}
-            String destination=bank.getSelectedItem().toString();
-            new AlertDialog.Builder(this).setTitle("Подтверждение · тестовый перевод")
-              .setMessage("Телефон: "+phone.getText()+"\\nБанк: "+destination+"\\nСумма: "+money(rounded)+"\\n\\nРеальные деньги не переводятся.")
-              .setNegativeButton("Отмена",null)
-              .setPositiveButton("Подтвердить",(dialog,which)->{
-                  balance=Math.round((balance-rounded)*100)/100.0;
-                  history.add(0,"−"+money(rounded)+" · "+destination+" · "+phone.getText());
-                  persist();
-                  ToneGenerator tone=new ToneGenerator(AudioManager.STREAM_NOTIFICATION,65);
-                  tone.startTone(ToneGenerator.TONE_PROP_ACK,180);
-                  new Handler(Looper.getMainLooper()).postDelayed(()->tone.release(),300);
-                  TextView success=text("✓\\n\\nПеревод выполнен\\n\\n"+money(rounded)+"\\n\\nТЕСТОВАЯ ОПЕРАЦИЯ",23,Color.WHITE,true);
-                  success.setGravity(Gravity.CENTER);success.setAlpha(0f);success.setBackgroundColor(RED);
-                  setContentView(success);success.animate().alpha(1f).setDuration(500).start();
-                  new Handler(Looper.getMainLooper()).postDelayed(()->show("Главная"),1900);
-              }).show();
-        });
-    }
-    void profilePage(){title("Профиль");info(owner,"Владелец профиля · имя можно изменить");action("Изменить имя или ник",()->{EditText field=new EditText(this);field.setSingleLine(true);field.setText(owner);new AlertDialog.Builder(this).setTitle("Имя профиля").setView(field).setNegativeButton("Отмена",null).setPositiveButton("Сохранить",(d,w)->{String value=field.getText().toString().trim();if(!value.isEmpty()){owner=value;persist();show("Профиль");}}).show();});info("Жухлый Банк","Тестовая версия 2.0 · без реальных платежей");action("Сбросить тестовые данные",()->new AlertDialog.Builder(this).setTitle("Сбросить данные?").setPositiveButton("Сбросить",(d,w)->{balance=17280480.50;history.clear();persist();show("Главная");}).setNegativeButton("Отмена",null).show());}
+ final int BG=0xff080e16, PANEL=0xff111d2b, RED=0xffee1838, WHITE=0xfff4f7fa, MUTED=0xff96a7b8;
+ LinearLayout root,body,nav; double balance=17280480.50; String owner="Мурзин Эдуард Сергеевич",nick="Жухлый_Эдик"; ArrayList<String> history=new ArrayList<>();
+ int dp(int x){return (int)(x*getResources().getDisplayMetrics().density+.5f);}
+ GradientDrawable shape(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));return d;}
+ TextView txt(String s,int size,int color,boolean bold){TextView t=new TextView(this);t.setText(s);t.setTextColor(color);t.setTextSize(size);if(bold)t.setTypeface(null,Typeface.BOLD);return t;}
+ void pad(View v,int a,int b,int c,int d){v.setPadding(dp(a),dp(b),dp(c),dp(d));}
+ void add(LinearLayout l,View v){l.addView(v,new LinearLayout.LayoutParams(-1,-2));}
+ void space(int h){View v=new View(this);body.addView(v,new LinearLayout.LayoutParams(1,dp(h)));}
+ @Override public void onCreate(Bundle b){super.onCreate(b);getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);balance=Double.longBitsToDouble(getPreferences(0).getLong("balanceBits",Double.doubleToLongBits(17280480.50)));owner=getPreferences(0).getString("owner",owner);nick=getPreferences(0).getString("nick",nick);String saved=getPreferences(0).getString("history","");if(!saved.isEmpty())history.addAll(Arrays.asList(saved.split("\\n")));show("Главная");}
+ void save(){getPreferences(0).edit().putLong("balanceBits",Double.doubleToLongBits(balance)).putString("owner",owner).putString("nick",nick).putString("history",String.join("\n",history)).apply();}
+ String rub(double n){return String.format(new Locale("ru","RU"),"%,.2f ₽",n);}
+ void show(String page){root=new LinearLayout(this);root.setOrientation(1);root.setBackgroundColor(BG);setContentView(root);
+ TextView header=txt("Ж̲",32,RED,true);header.setGravity(Gravity.CENTER);pad(header,0,12,0,0);add(root,header);
+ TextView subtitle=txt(page.equals("Главная")?"Жухлый Банк":page,17,WHITE,true);subtitle.setGravity(Gravity.CENTER);pad(subtitle,0,0,0,14);add(root,subtitle);
+ ScrollView scroll=new ScrollView(this);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));body=new LinearLayout(this);body.setOrientation(1);pad(body,18,12,18,20);scroll.addView(body);
+ if(page.equals("Главная"))home();else if(page.equals("Карты"))cards();else if(page.equals("Переводы"))transfer();else if(page.equals("История"))transactions();else profile();
+ TextView disclaimer=txt("Тестовое приложение · операции не являются реальными платежами",10,MUTED,false);disclaimer.setGravity(Gravity.CENTER);pad(disclaimer,4,18,4,8);add(body,disclaimer);
+ nav=new LinearLayout(this);nav.setBackgroundColor(PANEL);String[] tabs={"Главная","Карты","Переводы","История","Профиль"};String[] icons={"⌂","▣","⇄","◷","♙"};for(int i=0;i<tabs.length;i++){final String p=tabs[i];LinearLayout item=new LinearLayout(this);item.setOrientation(1);item.setGravity(Gravity.CENTER);pad(item,0,10,0,10);TextView symbol=txt(icons[i],21,p.equals(page)?RED:MUTED,true);symbol.setGravity(Gravity.CENTER);add(item,symbol);TextView label=txt(p,10,p.equals(page)?RED:MUTED,false);label.setGravity(Gravity.CENTER);add(item,label);nav.addView(item,new LinearLayout.LayoutParams(0,-2,1));item.setOnClickListener(v->show(p));}add(root,nav);
+ }
+ void heading(String s){TextView t=txt(s,23,WHITE,true);pad(t,0,4,0,16);add(body,t);}
+ LinearLayout panel(){LinearLayout p=new LinearLayout(this);p.setOrientation(1);pad(p,18,18,18,18);p.setBackground(shape(PANEL,18));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.bottomMargin=dp(12);body.addView(p,lp);return p;}
+ void line(LinearLayout p,String a,String b){TextView t=txt(a,15,WHITE,true);add(p,t);TextView d=txt(b,13,MUTED,false);pad(d,0,5,0,0);add(p,d);}
+ void button(String s,Runnable action){TextView t=txt(s,16,WHITE,true);t.setGravity(Gravity.CENTER);pad(t,12,16,12,16);t.setBackground(shape(RED,14));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,-2);lp.bottomMargin=dp(12);body.addView(t,lp);t.setOnClickListener(v->action.run());}
+ void home(){LinearLayout user=panel();line(user,owner,"@"+nick);LinearLayout money=panel();line(money,"Баланс","Доступно на счёте");TextView amount=txt(rub(balance),29,WHITE,true);pad(amount,0,12,0,0);add(money,amount);button("⇄  Перевести по СБП",()->show("Переводы"));button("▣  Мои карты",()->show("Карты"));LinearLayout p=panel();line(p,"Система быстрых платежей","Перевод по номеру телефона в выбранный банк");}
+ void cards(){heading("Мои карты");LinearLayout p=panel();p.setBackground(shape(0xff82101f,22));line(p,"Ж̲   ЖУХЛЫЙ БАНК","Виртуальная карта");TextView num=txt("••••  ••••  ••••  2026",22,WHITE,true);pad(num,0,40,0,10);add(p,num);TextView name=txt(owner.toUpperCase(new Locale("ru")),12,WHITE,true);add(p,name);LinearLayout hint=panel();line(hint,"Карта для тестирования","Номер карты условный, оплата в магазинах недоступна.");}
+ void transactions(){heading("История");if(history.isEmpty()){LinearLayout p=panel();line(p,"Операций пока нет","Попробуй тестовый перевод по СБП");}for(String h:history){LinearLayout p=panel();line(p,h,"Симуляция · без реального списания");}}
+ EditText field(String hint,int type){EditText e=new EditText(this);e.setHint(hint);e.setHintTextColor(MUTED);e.setTextColor(WHITE);e.setSingleLine(true);e.setInputType(type);pad(e,12,14,12,14);e.setBackground(shape(PANEL,12));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(58));lp.bottomMargin=dp(12);body.addView(e,lp);return e;}
+ void transfer(){heading("Перевод по СБП");TextView label=txt("Номер телефона получателя",13,MUTED,false);add(body,label);space(8);EditText phone=field("+7 999 123-45-67",3);TextView bankLabel=txt("Выберите банк",13,MUTED,false);add(body,bankLabel);space(8);Spinner banks=new Spinner(this);String[] options={"Выберите банк","СберБанк","Т-Банк","ВТБ","Альфа-Банк","ПСБ","Газпромбанк","Райффайзенбанк","Озон Банк","Другой банк"};ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,options);banks.setAdapter(adapter);banks.setBackground(shape(0xffdce2e8,12));LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(54));sp.bottomMargin=dp(14);body.addView(banks,sp);TextView amountLabel=txt("Сумма перевода",13,MUTED,false);add(body,amountLabel);space(8);EditText amount=field("0,00 ₽",8194);
+ button("Продолжить",()->{String digits=phone.getText().toString().replaceAll("[^0-9]","");if(digits.length()!=11||(digits.charAt(0)!='7'&&digits.charAt(0)!='8')){phone.setError("Нужен номер из 11 цифр");return;}if(banks.getSelectedItemPosition()==0){Toast.makeText(this,"Выбери банк",Toast.LENGTH_SHORT).show();return;}double value;try{value=Double.parseDouble(amount.getText().toString().replace(',','.'));}catch(Exception e){amount.setError("Укажи сумму");return;}if(!Double.isFinite(value)||value<=0||value>balance){amount.setError("Неверная сумма");return;}final double sum=Math.round(value*100)/100.0;if(sum<.01){amount.setError("Минимум 0,01 ₽");return;}String bank=banks.getSelectedItem().toString();new AlertDialog.Builder(this).setTitle("Подтверждение перевода").setMessage("Телефон: "+phone.getText()+"\nБанк: "+bank+"\nСумма: "+rub(sum)+"\n\nТестовая операция: деньги не отправляются.").setNegativeButton("Отмена",null).setPositiveButton("Подтвердить",(d,w)->{balance=Math.round((balance-sum)*100)/100.0;history.add(0,"−"+rub(sum)+" · "+bank+" · "+phone.getText());save();ToneGenerator tone=new ToneGenerator(AudioManager.STREAM_NOTIFICATION,60);tone.startTone(ToneGenerator.TONE_PROP_ACK,160);new Handler(Looper.getMainLooper()).postDelayed(()->tone.release(),300);TextView done=txt("✓\n\nПеревод выполнен\n\n"+rub(sum)+"\n\nТЕСТОВАЯ ОПЕРАЦИЯ",24,WHITE,true);done.setGravity(Gravity.CENTER);done.setBackgroundColor(BG);done.setAlpha(0f);setContentView(done);done.animate().alpha(1f).setDuration(500).start();new Handler(Looper.getMainLooper()).postDelayed(()->show("История"),2200);}).show();});
+ }
+ void edit(String title,boolean nickname){EditText input=new EditText(this);input.setSingleLine(true);input.setText(nickname?nick:owner);new AlertDialog.Builder(this).setTitle(title).setView(input).setNegativeButton("Отмена",null).setPositiveButton("Сохранить",(d,w)->{String v=input.getText().toString().trim();if(!v.isEmpty()){if(nickname)nick=v;else owner=v;save();show("Профиль");}}).show();}
+ void profile(){heading("Профиль");LinearLayout p=panel();line(p,owner,"@"+nick);button("✎ Изменить имя и фамилию",()->edit("Имя и фамилия",false));button("✎ Изменить никнейм",()->edit("Никнейм",true));LinearLayout note=panel();line(note,"Жухлый Банк 3.0","Тестовая версия. Все данные хранятся локально.");button("Сбросить тестовые операции",()->new AlertDialog.Builder(this).setTitle("Сбросить историю и баланс?").setNegativeButton("Отмена",null).setPositiveButton("Сбросить",(d,w)->{balance=17280480.50;history.clear();save();show("Главная");}).show());}
 }
