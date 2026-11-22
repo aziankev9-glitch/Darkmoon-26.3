@@ -127,7 +127,7 @@ public class MainActivity extends Activity {
  for(int y=0;y<3;y++){LinearLayout row=new LinearLayout(this);add(board,row);for(int x=0;x<5;x++){
  SlotSymbolView cell=new SlotSymbolView(this);cell.setSymbol(0);
  GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xffffd179,0xff71236e});
- bg.setCornerRadius(dp(12));bg.setStroke(dp(2),0xffffcf78);cell.setBackground(bg);cell.setShadowLayer(dp(2),0,dp(2),0xff54233a);
+ bg.setCornerRadius(dp(12));bg.setStroke(dp(2),0xffffcf78);cell.setBackground(bg);
  LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(78),1);lp.setMargins(dp(2),dp(3),dp(2),dp(3));row.addView(cell,lp);cells[y][x]=cell;
  }}
  TextView status=txt("🐕 Совпадения слева направо · 3–5 символов",14,0xffffd58a,true);status.setGravity(Gravity.CENTER);add(body,status);
