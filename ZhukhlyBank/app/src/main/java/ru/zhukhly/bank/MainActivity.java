@@ -242,7 +242,7 @@ public class MainActivity extends Activity {
   Spinner from=new Spinner(this),to=new Spinner(this);
   ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,names);
   from.setAdapter(adapter);to.setAdapter(adapter);
-  from.setSelection(Math.min(selected,count-1));to.setSelection(selected==0?1:0);
+  from.setSelection(Math.max(0,Math.min(selected,count-1)));to.setSelection(selected==0?1:0);
   add(body,txt("С какой карты",15,WHITE,true));add(body,from);
   add(body,txt("На какую карту",15,WHITE,true));add(body,to);
   EditText amount=field("Сумма перевода, ₽",8194);
@@ -257,6 +257,12 @@ public class MainActivity extends Activity {
    }catch(Exception e){Toast.makeText(this,"Проверь сумму и карты. ",Toast.LENGTH_LONG).show();}
   });
  }
+ void creditPanelDialog(){
+  new AlertDialog.Builder(this).setTitle("Кредитная карта · ДЕМО")
+   .setMessage("Доступно: "+rub(creditAvailable)+"\nЗадолженность: "+rub(creditDebt)+"\n7 дней без процентов, затем однократно 10% от суммы кредита.")
+   .setPositiveButton(creditDebt>0?"Погасить":"Оформить кредит",(d,w)->{if(creditDebt>0){show("Карты");repayCredit();}else chooseCredit();})
+   .setNegativeButton("Закрыть",null).show();
+ }
  void creditPanel(){
   heading("Кредитная карта · ДЕМО");
   LinearLayout p=panel();line(p,"Баланс кредитной карты: "+rub(creditAvailable),"Задолженность: "+rub(creditDebt));
@@ -270,8 +276,8 @@ public class MainActivity extends Activity {
    .setItems(options,(d,which)->{if(creditDebt>0){Toast.makeText(this,"Сначала погаси текущий кредит",Toast.LENGTH_SHORT).show();return;}creditPrincipal=values[which];creditDebt=values[which];creditAvailable=values[which];creditDue=System.currentTimeMillis()+7L*86400000L;lastPenaltyDay=0;history.add(0,"Демо-кредит +"+rub(values[which]));save();show("Карты");})
    .setNegativeButton("Отмена",null).show();
  }
- void repayCredit(){heading("Погашение кредита");EditText amount=field("Сумма погашения, ₽",8194);button("Погасить",()->{try{double sum=Double.parseDouble(amount.getText().toString().replace(',','.'));if(!Double.isFinite(sum)||sum<=0||sum>balance)throw new Exception();double paid=Math.min(sum,creditDebt);balance-=paid;creditDebt=Math.max(0,Math.round((creditDebt-paid)*100)/100.0);creditAvailable+=paid;if(creditDebt==0){creditAvailable=0;creditDue=0;lastPenaltyDay=0;creditPrincipal=0;}history.add(0,"Погашение кредита · "+rub(paid));save();show("Карты");}catch(Exception e){Toast.makeText(this,"Недостаточно средств или неверная сумма",Toast.LENGTH_SHORT).show();}});}
- void settleAccounts(){long today=System.currentTimeMillis()/86400000L;if(lastSavingsDay==0)lastSavingsDay=today;if(today>lastSavingsDay&&savings>0){long days=Math.min(365,today-lastSavingsDay);double earned=Math.round(savings*(Math.pow(1+0.05/365,days)-1)*100)/100.0;savings+=earned;if(earned>0)history.add(0,"Проценты по накоплениям +"+rub(earned));}lastSavingsDay=today;java.util.Calendar cal=java.util.Calendar.getInstance();if(cal.get(java.util.Calendar.HOUR_OF_DAY)>=5){}else cal.add(java.util.Calendar.DAY_OF_MONTH,-1);long day=cal.get(java.util.Calendar.YEAR)*1000L+cal.get(java.util.Calendar.DAY_OF_YEAR);if(day>lastSalaryDay){if(lastSalaryDay!=-1||java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)>=5){salaryBalance+=5000;history.add(0,"Зарплата +5 000 ₽");}lastSalaryDay=day;}if(creditDebt>0&&creditDue>0&&System.currentTimeMillis()>creditDue&&lastPenaltyDay==0){creditDebt=Math.round((creditDebt+creditPrincipal*0.10)*100)/100.0;lastPenaltyDay=1;history.add(0,"Просрочка демо-кредита · 10% от суммы");}save();}
+ void repayCredit(){heading("Погашение кредита");EditText amount=field("Сумма погашения, ₽",8194);button("Погасить",()->{try{double sum=Double.parseDouble(amount.getText().toString().replace(',','.'));if(!Double.isFinite(sum)||sum<=0||sum>balance||creditDebt<=0)throw new Exception();double paid=Math.min(sum,creditDebt);balance-=paid;creditDebt=Math.max(0,Math.round((creditDebt-paid)*100)/100.0);if(creditDebt==0){creditAvailable=0;creditDue=0;lastPenaltyDay=0;creditPrincipal=0;}history.add(0,"Погашение кредита · "+rub(paid));save();show("Карты");}catch(Exception e){Toast.makeText(this,"Недостаточно средств или неверная сумма",Toast.LENGTH_SHORT).show();}});}
+ void settleAccounts(){long today=System.currentTimeMillis()/86400000L;if(lastSavingsDay==0)lastSavingsDay=today;if(today>lastSavingsDay&&savings>0){long days=Math.min(365,today-lastSavingsDay);double earned=Math.round(savings*(Math.pow(1+0.05/365,days)-1)*100)/100.0;savings+=earned;if(earned>0)history.add(0,"Проценты по накоплениям +"+rub(earned));}lastSavingsDay=today;java.util.Calendar cal=java.util.Calendar.getInstance();if(cal.get(java.util.Calendar.HOUR_OF_DAY)>=5){}else cal.add(java.util.Calendar.DAY_OF_MONTH,-1);long day=cal.get(java.util.Calendar.YEAR)*1000L+cal.get(java.util.Calendar.DAY_OF_YEAR);if(day>lastSalaryDay){lastSalaryDay=day;}if(creditDebt>0&&creditDue>0&&System.currentTimeMillis()>creditDue&&lastPenaltyDay==0){creditDebt=Math.round((creditDebt+creditPrincipal*0.10)*100)/100.0;lastPenaltyDay=1;history.add(0,"Просрочка демо-кредита · 10% от суммы");}save();}
  void transactions(){heading("История");if(history.isEmpty()){LinearLayout p=panel();line(p,"Операций пока нет","Попробуй перевод по СБП");}for(String h:history){LinearLayout p=panel();line(p,h,"Нажми для подробностей и квитанции ›");p.setOnClickListener(v->receipt(h));}}
  EditText field(String hint,int type){EditText e=new EditText(this);e.setHint(hint);e.setHintTextColor(MUTED);e.setTextColor(WHITE);e.setSingleLine(true);e.setInputType(type);pad(e,12,14,12,14);e.setBackground(shape(PANEL,12));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(58));lp.bottomMargin=dp(12);body.addView(e,lp);return e;}
  void transfer(){heading("Перевод по СБП");TextView label=txt("Номер телефона получателя",13,MUTED,false);add(body,label);space(8);EditText phone=field("+7 999 123-45-67",3);phone.setText("+7 ");phone.setSelection(phone.length());phone.addTextChangedListener(new TextWatcher(){boolean busy=false;public void beforeTextChanged(CharSequence x,int a,int c,int d){}public void onTextChanged(CharSequence x,int a,int b,int c){}public void afterTextChanged(Editable e){if(busy)return;busy=true;String d=e.toString().replaceAll("[^0-9]","");if(d.startsWith("8"))d="7"+d.substring(1);if(d.startsWith("7"))d=d.substring(1);if(d.length()>10)d=d.substring(0,10);StringBuilder b=new StringBuilder("+7 ");for(int i=0;i<d.length();i++){if(i==3)b.append(" ");if(i==6||i==8)b.append("-");b.append(d.charAt(i));}phone.setText(b.toString());phone.setSelection(phone.length());busy=false;}});TextView bankLabel=txt("Выберите банк",13,MUTED,false);add(body,bankLabel);space(8);Spinner banks=new Spinner(this);String[] options={"Выберите банк","СберБанк","Т-Банк","ВТБ","Альфа-Банк","ПСБ","Газпромбанк","Райффайзенбанк","Озон Банк","Другой банк"};ArrayAdapter<String> adapter=new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,options){public View getView(int pos,View old,android.view.ViewGroup parent){return bankRow(pos);}public View getDropDownView(int pos,View old,android.view.ViewGroup parent){return bankRow(pos);}};banks.setAdapter(adapter);banks.setBackground(shape(PANEL,12));LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(-1,dp(54));sp.bottomMargin=dp(14);body.addView(banks,sp);TextView amountLabel=txt("Сумма перевода",13,MUTED,false);add(body,amountLabel);space(8);EditText amount=field("0,00 ₽",8194);
@@ -629,7 +635,7 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
    LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(cardWidth,-2);lp.rightMargin=dp(12);track.addView(tile,lp);
    LinearLayout card=styledBankCard(id,cardTitle(id),cardThemeColor(id),true);
    card.setElevation(dp(8));tile.addView(card,new LinearLayout.LayoutParams(-1,dp(205)));
-   card.setOnClickListener(v->{if(id==2)show("Карты");else cardPreview(id,cardTitle(id),cardBalance(id),cardThemeColor(id));});
+   card.setOnClickListener(v->{if(id==2)creditPanelDialog();else cardPreview(id,cardTitle(id),cardBalance(id),cardThemeColor(id));});
   }
   if(extraCards==0){
    LinearLayout empty=new LinearLayout(this);empty.setOrientation(1);empty.setGravity(Gravity.CENTER);
