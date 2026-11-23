@@ -107,12 +107,12 @@ public class MainActivity extends Activity {
   LinearLayout middle=new LinearLayout(this);middle.setGravity(Gravity.CENTER_VERTICAL);pad(middle,0,9,0,4);add(card,middle);
   TextView chip=txt("▦  )))",22,0xffffd38a,true);middle.addView(chip,new LinearLayout.LayoutParams(0,-2,1));
   TextView logo=txt("Ж",35,0x99ffb4ca,true);logo.setGravity(Gravity.RIGHT);middle.addView(logo,new LinearLayout.LayoutParams(0,-2,1));
-  TextView number=txt(reveal?demoCardNumber(id):hiddenCardNumber(id),17,0xffffffff,true);number.setLetterSpacing(.01f);add(card,number);
+  TextView number=txt(demoCardNumber(id),17,0xffffffff,true);number.setLetterSpacing(.01f);add(card,number);
   LinearLayout bottom=new LinearLayout(this);bottom.setGravity(Gravity.CENTER_VERTICAL);pad(bottom,0,6,0,0);add(card,bottom);
   TextView caption=txt(label+"  ·  ДЕМО",10,0xfff1c4d1,false);bottom.addView(caption,new LinearLayout.LayoutParams(0,-2,1));
   add(bottom,txt("08/30",11,0xffffffff,true));
   TextView amount=txt("Баланс: "+rub(cardBalance(id)),14,0xffffffff,true);pad(amount,0,6,0,0);add(card,amount);
-  if(!reveal)bindHoldReveal(card,number,id);
+  card.setOnLongClickListener(v->{Toast.makeText(this,"Демонстрационный номер: "+demoCardNumber(id),Toast.LENGTH_SHORT).show();return true;});
   return card;
  }
  void cardPreview(int id,String label,double amount,int color){
