@@ -263,6 +263,7 @@ public class MainActivity extends Activity {
    .setPositiveButton(creditDebt>0?"Погасить":"Оформить кредит",(d,w)->{if(creditDebt>0){show("Карты");repayCredit();}else chooseCredit();})
    .setNegativeButton("Закрыть",null).show();
  }
+ void creditPanelDialog(){show("Карты");}
  void creditPanel(){
   heading("Кредитная карта · ДЕМО");
   LinearLayout p=panel();line(p,"Баланс кредитной карты: "+rub(creditAvailable),"Задолженность: "+rub(creditDebt));
@@ -648,7 +649,7 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
   }
   add(body,scroller);
   TextView swipe=txt(extraCards==0?"●  ○  ○  ＋   Листай карты →":"●  ○  ○  ○   Листай карты свайпом",12,MUTED,false);swipe.setGravity(Gravity.CENTER);add(body,swipe);
-  TextView transfer=txt("⇄  Перевод между картами · кредит: только списание",14,WHITE,true);transfer.setGravity(Gravity.CENTER);pad(transfer,12,13,12,13);transfer.setBackground(shape(PANEL,15));add(body,transfer);
+  TextView transfer=txt("⇄  Перевод между картами",14,WHITE,true);transfer.setGravity(Gravity.CENTER);pad(transfer,12,13,12,13);transfer.setBackground(shape(PANEL,15));add(body,transfer);
   transfer.setOnClickListener(v->cardTransferFrom(0));
  }
  void openExtraCard(){createCustomCard();}
