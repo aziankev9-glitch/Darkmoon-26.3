@@ -75,19 +75,18 @@ public class MainActivity extends Activity {
   runnerImage.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
   runnerBox.addView(runnerImage,new android.widget.FrameLayout.LayoutParams(-1,-1));
   final int fw=sprite.getWidth()/3,fh=sprite.getHeight()/3;
-  android.animation.ValueAnimator running=android.animation.ValueAnimator.ofInt(0,8);
+  final android.graphics.Bitmap[] frames=new android.graphics.Bitmap[9];
+  for(int frame=0;frame<9;frame++)frames[frame]=android.graphics.Bitmap.createBitmap(sprite,(frame%3)*fw,(frame/3)*fh,fw,fh);
+  runnerImage.setImageBitmap(frames[0]);
+  final android.animation.ValueAnimator running=android.animation.ValueAnimator.ofInt(0,8);
   running.setDuration(1125);running.setRepeatCount(android.animation.ValueAnimator.INFINITE);
   running.setInterpolator(new android.view.animation.LinearInterpolator());
-  running.addUpdateListener(animation->{
-   if(!runnerImage.isAttachedToWindow()){animation.cancel();return;}
-   int frame=(Integer)animation.getAnimatedValue();
-   android.graphics.Bitmap piece=android.graphics.Bitmap.createBitmap(sprite,(frame%3)*fw,(frame/3)*fh,fw,fh);
-   runnerImage.setImageBitmap(piece);
-  });
+  running.addUpdateListener(animation->runnerImage.setImageBitmap(frames[(Integer)animation.getAnimatedValue()]));
   runnerImage.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener(){
-   public void onViewAttachedToWindow(View v){if(!running.isStarted())running.start();}
+   public void onViewAttachedToWindow(View v){runnerImage.post(()->{if(runnerImage.isAttachedToWindow()&&!running.isRunning())running.start();});}
    public void onViewDetachedFromWindow(View v){running.cancel();}
   });
+  runnerImage.post(()->{if(runnerImage.isAttachedToWindow()&&!running.isRunning())running.start();});
  }catch(Exception missingAsset){
   TextView character=txt("🏃🏻‍♂️",86,RED,true);character.setGravity(Gravity.CENTER);
   runnerBox.addView(character,new android.widget.FrameLayout.LayoutParams(-1,-1));
