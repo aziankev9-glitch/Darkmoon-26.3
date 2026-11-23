@@ -66,13 +66,40 @@ public class MainActivity extends Activity {
   bg.setCornerRadius(dp(22));bg.setStroke(dp(2),0xffe54d75);return bg;
  }
  void bindHoldReveal(View target,TextView number,int id){
-  target.setOnTouchListener((v,event)->{
-   switch(event.getActionMasked()){
-    case MotionEvent.ACTION_DOWN:number.setText(demoCardNumber(id));return true;
-    case MotionEvent.ACTION_UP:number.setText(hiddenCardNumber(id));v.performClick();return true;
-    case MotionEvent.ACTION_CANCEL:number.setText(hiddenCardNumber(id));return true;
-   }return true;
-  });
+  target.setOnLongClickListener(v->{number.setText(demoCardNumber(id));new Handler(Looper.getMainLooper()).postDelayed(()->number.setText(hiddenCardNumber(id)),3500);return true;});
+ }
+ double cardBalance(int id){return id==0?balance:id==1?salaryBalance:id==2?75000-creditDebt:extraBalances[id-3];}
+ void adjustCardBalance(int id,double delta){if(id==0)balance+=delta;else if(id==1)salaryBalance+=delta;else if(id>=3)extraBalances[id-3]+=delta;}
+ android.graphics.drawable.Drawable cardBackground(int id,int color){
+  GradientDrawable base=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff090b14,color,0xff250815,0xff080a14});
+  base.setCornerRadius(dp(19));
+  android.graphics.drawable.Drawable background=base;
+  String uri=getPreferences(0).getString("custom_card_uri_"+id,"");
+  if(!uri.isEmpty())try{
+   java.io.InputStream stream=getContentResolver().openInputStream(android.net.Uri.parse(uri));
+   android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(stream);stream.close();
+   if(bitmap!=null){
+    android.graphics.drawable.BitmapDrawable image=new android.graphics.drawable.BitmapDrawable(getResources(),bitmap);
+    image.setGravity(Gravity.FILL);
+    GradientDrawable tint=shape(0x55050012,19);
+    background=new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{base,image,tint});
+   }
+  }catch(Exception ignored){}
+  GradientDrawable border=new GradientDrawable();border.setColor(0x00000000);border.setCornerRadius(dp(19));border.setStroke(dp(2),0xffff3764);
+  return new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{background,border});
+ }
+ void pickCardBackground(int id){
+  Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
+  intent.setType("image/*");intent.addCategory(Intent.CATEGORY_OPENABLE);
+  startActivityForResult(intent,7700+id);
+ }
+ @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
+  super.onActivityResult(requestCode,resultCode,data);
+  if(requestCode>=7700&&requestCode<7708&&resultCode==RESULT_OK&&data!=null&&data.getData()!=null){
+   try{getContentResolver().takePersistableUriPermission(data.getData(),Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}
+   getPreferences(0).edit().putString("custom_card_uri_"+(requestCode-7700),data.getData().toString()).apply();
+   show("Карты");
+  }
  }
  int cardThemeColor(int id){
   if(id>=3)return getPreferences(0).getInt("custom_card_color_"+id,0xff9a204b);
@@ -80,31 +107,37 @@ public class MainActivity extends Activity {
  }
  String cardTitle(int id){return id==0?"Основная карта":id==1?"Зарплатная карта":id==2?"Кредитная карта":"Моя карта "+(id-2);}
  LinearLayout styledBankCard(int id,String label,int color,boolean reveal){
-  LinearLayout card=new LinearLayout(this);card.setOrientation(1);pad(card,18,14,18,13);
-  card.setBackground(luxuryCardBackground(color));
+  LinearLayout card=new LinearLayout(this);card.setOrientation(1);pad(card,17,13,17,12);
+  card.setBackground(cardBackground(id,color));
   LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);add(card,top);
-  TextView brand=txt("Ж  Жухлый Банк",16,WHITE,true);top.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
-  add(top,txt("МИР",15,WHITE,true));
-  LinearLayout center=new LinearLayout(this);center.setGravity(Gravity.CENTER_VERTICAL);pad(center,0,12,0,9);add(card,center);
-  TextView chip=txt("▦  )))",23,0xffffd58a,true);center.addView(chip,new LinearLayout.LayoutParams(0,-2,1));
-  TextView emblem=txt("Ж",37,0x88ff91ad,true);emblem.setGravity(Gravity.RIGHT);center.addView(emblem,new LinearLayout.LayoutParams(0,-2,1));
-  TextView number=txt(reveal?demoCardNumber(id):hiddenCardNumber(id),18,WHITE,true);number.setLetterSpacing(.025f);add(card,number);
-  LinearLayout bottom=new LinearLayout(this);bottom.setGravity(Gravity.CENTER_VERTICAL);pad(bottom,0,11,0,0);add(card,bottom);
-  TextView caption=txt(label+"  ·  ДЕМО",11,0xffefb9ca,false);bottom.addView(caption,new LinearLayout.LayoutParams(0,-2,1));
-  add(bottom,txt("08/30",12,WHITE,true));
+  TextView brand=txt("Ж  Жухлый Банк",15,0xffffffff,true);top.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
+  add(top,txt("МИР",16,0xffffffff,true));
+  LinearLayout middle=new LinearLayout(this);middle.setGravity(Gravity.CENTER_VERTICAL);pad(middle,0,9,0,4);add(card,middle);
+  TextView chip=txt("▦  )))",22,0xffffd38a,true);middle.addView(chip,new LinearLayout.LayoutParams(0,-2,1));
+  TextView logo=txt("Ж",35,0x99ffb4ca,true);logo.setGravity(Gravity.RIGHT);middle.addView(logo,new LinearLayout.LayoutParams(0,-2,1));
+  TextView number=txt(reveal?demoCardNumber(id):hiddenCardNumber(id),17,0xffffffff,true);number.setLetterSpacing(.01f);add(card,number);
+  LinearLayout bottom=new LinearLayout(this);bottom.setGravity(Gravity.CENTER_VERTICAL);pad(bottom,0,6,0,0);add(card,bottom);
+  TextView caption=txt(label+"  ·  ДЕМО",10,0xfff1c4d1,false);bottom.addView(caption,new LinearLayout.LayoutParams(0,-2,1));
+  add(bottom,txt("08/30",11,0xffffffff,true));
+  TextView amount=txt("Баланс: "+rub(cardBalance(id)),14,0xffffffff,true);pad(amount,0,6,0,0);add(card,amount);
   if(!reveal)bindHoldReveal(card,number,id);
   return card;
  }
  void cardPreview(int id,String label,double amount,int color){
   Dialog dialog=new Dialog(this);
-  LinearLayout wrap=new LinearLayout(this);wrap.setOrientation(1);pad(wrap,16,18,16,20);wrap.setBackground(shape(PANEL,24));
-  TextView heading=txt("Моя карта",21,WHITE,true);pad(heading,0,0,0,14);add(wrap,heading);
+  LinearLayout wrap=new LinearLayout(this);wrap.setOrientation(1);pad(wrap,16,18,16,18);wrap.setBackground(shape(PANEL,23));
+  TextView heading=txt("Моя карта",20,WHITE,true);pad(heading,0,0,0,12);add(wrap,heading);
   LinearLayout card=styledBankCard(id,label,color,false);
-  wrap.addView(card,new LinearLayout.LayoutParams(-1,dp(205)));
-  TextView hint=txt("Зажми карту — покажем номер",12,MUTED,false);hint.setGravity(Gravity.CENTER);pad(hint,0,14,0,0);add(wrap,hint);
-  TextView close=txt("Закрыть",15,WHITE,true);close.setGravity(Gravity.CENTER);pad(close,12,12,12,12);close.setBackground(shape(RED,14));
-  LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.topMargin=dp(17);wrap.addView(close,cp);close.setOnClickListener(v->dialog.dismiss());
-  dialog.setContentView(wrap);dialog.show();Window w=dialog.getWindow();if(w!=null){w.setBackgroundDrawableResource(android.R.color.transparent);w.setLayout(getResources().getDisplayMetrics().widthPixels-dp(28),-2);}
+  wrap.addView(card,new LinearLayout.LayoutParams(-1,dp(204)));
+  TextView hint=txt("Удерживай карту, чтобы увидеть номер",12,MUTED,false);hint.setGravity(Gravity.CENTER);pad(hint,0,10,0,0);add(wrap,hint);
+  TextView edit=txt("🖼  Выбрать фон из галереи",14,WHITE,true);edit.setGravity(Gravity.CENTER);pad(edit,12,13,12,13);edit.setBackground(shape(0xff263448,14));
+  LinearLayout.LayoutParams ep=new LinearLayout.LayoutParams(-1,-2);ep.topMargin=dp(12);wrap.addView(edit,ep);
+  edit.setOnClickListener(v->{dialog.dismiss();pickCardBackground(id);});
+  TextView transfer=txt("⇄  Перевести с этой карты",14,WHITE,true);transfer.setGravity(Gravity.CENTER);pad(transfer,12,13,12,13);transfer.setBackground(shape(RED,14));
+  LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(-1,-2);tp.topMargin=dp(9);wrap.addView(transfer,tp);
+  transfer.setOnClickListener(v->{dialog.dismiss();cardTransferFrom(id);});
+  TextView close=txt("Закрыть",13,MUTED,false);close.setGravity(Gravity.CENTER);pad(close,12,11,12,8);add(wrap,close);close.setOnClickListener(v->dialog.dismiss());
+  dialog.setContentView(wrap);dialog.show();Window w=dialog.getWindow();if(w!=null){w.setBackgroundDrawableResource(android.R.color.transparent);w.setLayout(getResources().getDisplayMetrics().widthPixels-dp(26),-2);}
  }
  void createCustomCard(){
   if(extraCards>=5){Toast.makeText(this,"Максимум 5 своих карт",Toast.LENGTH_SHORT).show();return;}
@@ -118,7 +151,7 @@ public class MainActivity extends Activity {
     int id=3+extraCards;
     getPreferences(0).edit().putInt("custom_card_color_"+id,colors[selected[0]]).apply();
     extraBalances[extraCards]=0;extraCards++;save();show("Карты");
-    Toast.makeText(this,"Карта создана! Фон из галереи добавим следующим обновлением",Toast.LENGTH_LONG).show();
+    new AlertDialog.Builder(this).setTitle("Карта создана").setMessage("Хочешь сразу установить свой фон из галереи?").setNegativeButton("Позже",null).setPositiveButton("Выбрать фон",(dd,ww)->pickCardBackground(id)).show();
    }).show();
  }
  void zhukhlyPay(){
@@ -221,7 +254,7 @@ public class MainActivity extends Activity {
    TextView caption=txt(cardTitle(id)+"  •  Нажми для просмотра",12,MUTED,false);
    pad(caption,6,11,0,0);add(tile,caption);
    // Short tap opens details; long press still reveals the number.
-   card.setOnClickListener(v->cardPreview(id,cardTitle(id),id==0?balance:id==1?salaryBalance:id==2?creditDebt:extraBalances[id-3],color));
+   card.setOnClickListener(v->cardPreview(id,cardTitle(id),cardBalance(id),color));
   }
   LinearLayout addTile=new LinearLayout(this);addTile.setOrientation(1);addTile.setGravity(Gravity.CENTER);
   addTile.setBackground(shape(PANEL,22));
@@ -238,7 +271,30 @@ public class MainActivity extends Activity {
   button("Получить кредит 75 000 ₽",()->{settleAccounts();if(creditDebt>0){Toast.makeText(this,"Сначала погаси текущий кредит",Toast.LENGTH_LONG).show();return;}creditDebt=75000;balance+=75000;creditDue=System.currentTimeMillis()+7L*86400000;lastPenaltyDay=0;history.add(0,"Кредит +75 000 ₽ · срок 7 дней");save();show("Карты");});
   if(creditDebt>0){LinearLayout info=panel();line(info,"Кредит к погашению",rub(creditDebt)+" · срок до "+new java.text.SimpleDateFormat("dd.MM.yyyy",Locale.getDefault()).format(new Date(creditDue)));button("Погасить кредит",()->repayCredit());}
  }
- void cardTransfer(){heading("Перевод между картами");String[] names={"Основная","Зарплатная"};Spinner from=new Spinner(this),to=new Spinner(this);ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,names);from.setAdapter(adapter);to.setAdapter(adapter);to.setSelection(1);add(body,from);add(body,to);EditText amount=field("Сумма, ₽",8194);button("Перевести",()->{try{double sum=Double.parseDouble(amount.getText().toString().replace(',','.'));if(!Double.isFinite(sum)||sum<=0||from.getSelectedItemPosition()==to.getSelectedItemPosition())throw new Exception();if(from.getSelectedItemPosition()==0){if(sum>balance)throw new Exception();balance-=sum;salaryBalance+=sum;}else{if(sum>salaryBalance)throw new Exception();salaryBalance-=sum;balance+=sum;}history.add(0,"Между картами · "+rub(sum));save();show("Карты");}catch(Exception e){Toast.makeText(this,"Проверь сумму и карты",Toast.LENGTH_SHORT).show();}});}
+ void cardTransfer(){cardTransferFrom(0);}
+ void cardTransferFrom(int selected){
+  heading("Перевод между своими картами");
+  int count=3+extraCards;
+  String[] names=new String[count];
+  for(int i=0;i<count;i++)names[i]=cardTitle(i)+" · "+rub(cardBalance(i));
+  Spinner from=new Spinner(this),to=new Spinner(this);
+  ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,names);
+  from.setAdapter(adapter);to.setAdapter(adapter);
+  from.setSelection(Math.max(0,Math.min(selected,count-1)));to.setSelection(selected==0?1:0);
+  add(body,txt("С какой карты",15,WHITE,true));add(body,from);
+  add(body,txt("На какую карту",15,WHITE,true));add(body,to);
+  EditText amount=field("Сумма перевода, ₽",8194);
+  button("Перевести",()->{
+   try{
+    int source=from.getSelectedItemPosition(),destination=to.getSelectedItemPosition();
+    double sum=Double.parseDouble(amount.getText().toString().replace(',','.'));
+    if(!Double.isFinite(sum)||sum<=0||source==destination||source==2||destination==2||sum>cardBalance(source))throw new Exception();
+    adjustCardBalance(source,-sum);adjustCardBalance(destination,sum);
+    history.add(0,"Между картами: "+cardTitle(source)+" → "+cardTitle(destination)+" · "+rub(sum));
+    save();show("Карты");
+   }catch(Exception e){Toast.makeText(this,"Проверь сумму и карты. Кредитная карта не участвует в переводах.",Toast.LENGTH_LONG).show();}
+  });
+ }
  void repayCredit(){heading("Погашение кредита");EditText amount=field("Сумма погашения, ₽",8194);button("Погасить",()->{try{double sum=Double.parseDouble(amount.getText().toString().replace(',','.'));if(!Double.isFinite(sum)||sum<=0||sum>balance)throw new Exception();double paid=Math.min(sum,creditDebt);balance-=paid;creditDebt=Math.max(0,Math.round((creditDebt-paid)*100)/100.0);if(creditDebt==0){creditDue=0;lastPenaltyDay=0;}history.add(0,"Погашение кредита · "+rub(paid));save();show("Карты");}catch(Exception e){Toast.makeText(this,"Недостаточно средств или неверная сумма",Toast.LENGTH_SHORT).show();}});}
  void settleAccounts(){long today=System.currentTimeMillis()/86400000L;if(lastSavingsDay==0)lastSavingsDay=today;if(today>lastSavingsDay&&savings>0){long days=Math.min(365,today-lastSavingsDay);double earned=Math.round(savings*(Math.pow(1+0.05/365,days)-1)*100)/100.0;savings+=earned;if(earned>0)history.add(0,"Проценты по накоплениям +"+rub(earned));}lastSavingsDay=today;java.util.Calendar cal=java.util.Calendar.getInstance();if(cal.get(java.util.Calendar.HOUR_OF_DAY)>=5){}else cal.add(java.util.Calendar.DAY_OF_MONTH,-1);long day=cal.get(java.util.Calendar.YEAR)*1000L+cal.get(java.util.Calendar.DAY_OF_YEAR);if(day>lastSalaryDay){if(lastSalaryDay!=-1||java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)>=5){salaryBalance+=5000;history.add(0,"Зарплата +5 000 ₽");}lastSalaryDay=day;}if(creditDebt>0&&creditDue>0){long overdue=(System.currentTimeMillis()-creditDue+86399999L)/86400000L;if(System.currentTimeMillis()>creditDue&&overdue>lastPenaltyDay){long days=Math.min(30,overdue-lastPenaltyDay);for(int i=0;i<days;i++)creditDebt=Math.round(creditDebt*1.1*100)/100.0;lastPenaltyDay=overdue;history.add(0,"Просрочка кредита · 10% в день");}}save();}
  void transactions(){heading("История");if(history.isEmpty()){LinearLayout p=panel();line(p,"Операций пока нет","Попробуй перевод по СБП");}for(String h:history){LinearLayout p=panel();line(p,h,"Нажми для подробностей и квитанции ›");p.setOnClickListener(v->receipt(h));}}
