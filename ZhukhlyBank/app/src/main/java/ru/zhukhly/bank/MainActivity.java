@@ -186,7 +186,8 @@ public class MainActivity extends Activity {
   TextView heading=txt("Моя карта",20,WHITE,true);pad(heading,0,0,0,12);add(wrap,heading);
   LinearLayout card=styledBankCard(id,label,color,false);
   wrap.addView(card,new LinearLayout.LayoutParams(-1,dp(204)));
-  if(id==1)salaryWidget(wrap);\n  TextView hint=txt("Удерживай карту, чтобы увидеть номер",12,MUTED,false);hint.setGravity(Gravity.CENTER);pad(hint,0,10,0,0);add(wrap,hint);
+  if(id==1)salaryWidget(wrap);
+  TextView hint=txt("Удерживай карту, чтобы увидеть номер",12,MUTED,false);hint.setGravity(Gravity.CENTER);pad(hint,0,10,0,0);add(wrap,hint);
   TextView edit=txt("🖼  Выбрать фон из галереи",14,WHITE,true);edit.setGravity(Gravity.CENTER);pad(edit,12,13,12,13);edit.setBackground(shape(0xff263448,14));
   LinearLayout.LayoutParams ep=new LinearLayout.LayoutParams(-1,-2);ep.topMargin=dp(12);wrap.addView(edit,ep);
   edit.setOnClickListener(v->{if(id!=3||!getPreferences(0).getString("custom_card_uri_3","").isEmpty()){Toast.makeText(this,"Фон выбирается один раз при создании новой карты",Toast.LENGTH_LONG).show();return;}dialog.dismiss();pickCardBackground(id);});
