@@ -101,21 +101,52 @@ public class MainActivity extends Activity {
  }
  String cardTitle(int id){return id==0?"Основная карта":id==1?"Зарплатная карта":id==2?"Кредитная карта":"Моя карта "+(id-2);}
  LinearLayout styledBankCard(int id,String label,int color,boolean reveal){
-  LinearLayout card=new LinearLayout(this);card.setOrientation(1);pad(card,17,13,17,12);
-  card.setBackground(cardBackground(id,color));
-  LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);add(card,top);
-  TextView brand=txt("Ж  Жухлый Банк",15,0xffffffff,true);top.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
-  add(top,txt("МИР",16,0xffffffff,true));
-  LinearLayout middle=new LinearLayout(this);middle.setGravity(Gravity.CENTER_VERTICAL);pad(middle,0,9,0,4);add(card,middle);
-  TextView chip=txt("▦  )))",22,0xffffd38a,true);middle.addView(chip,new LinearLayout.LayoutParams(0,-2,1));
-  TextView logo=txt("Ж",35,0x99ffb4ca,true);logo.setGravity(Gravity.RIGHT);middle.addView(logo,new LinearLayout.LayoutParams(0,-2,1));
-  TextView number=txt(demoCardNumber(id),17,0xffffffff,true);number.setLetterSpacing(.01f);add(card,number);
-  LinearLayout bottom=new LinearLayout(this);bottom.setGravity(Gravity.CENTER_VERTICAL);pad(bottom,0,6,0,0);add(card,bottom);
-  TextView caption=txt(label+"  ·  ДЕМО",10,0xfff1c4d1,false);bottom.addView(caption,new LinearLayout.LayoutParams(0,-2,1));
-  add(bottom,txt("08/30",11,0xffffffff,true));
-  TextView amount=txt("Баланс: "+rub(cardBalance(id)),14,0xffffffff,true);pad(amount,0,6,0,0);add(card,amount);
-  card.setOnLongClickListener(v->{Toast.makeText(this,"Демонстрационный номер: "+demoCardNumber(id),Toast.LENGTH_SHORT).show();return true;});
-  return card;
+  LinearLayout outer=new LinearLayout(this);outer.setOrientation(1);
+  android.widget.FrameLayout face=new android.widget.FrameLayout(this);
+  outer.addView(face,new LinearLayout.LayoutParams(-1,dp(205)));
+  face.setBackground(cardBackground(id,color));face.setClipChildren(false);
+  android.widget.FrameLayout.LayoutParams topLp=new android.widget.FrameLayout.LayoutParams(-1,dp(36),Gravity.TOP);
+  topLp.setMargins(dp(17),dp(10),dp(17),0);
+  LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);face.addView(top,topLp);
+  TextView brand=txt("Ж  Жухлый Банк",15,WHITE,true);top.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
+  TextView network=txt("МИР",17,WHITE,true);add(top,network);
+  TextView emblem=txt("Ж",70,0x44ff8da9,true);emblem.setGravity(Gravity.RIGHT);
+  android.widget.FrameLayout.LayoutParams elp=new android.widget.FrameLayout.LayoutParams(dp(105),dp(100),Gravity.RIGHT|Gravity.CENTER_VERTICAL);
+  elp.rightMargin=dp(18);face.addView(emblem,elp);
+  TextView chip=txt("▦  )))",24,0xffffd489,true);
+  android.widget.FrameLayout.LayoutParams clp=new android.widget.FrameLayout.LayoutParams(-2,dp(39),Gravity.TOP|Gravity.LEFT);
+  clp.leftMargin=dp(19);clp.topMargin=dp(54);face.addView(chip,clp);
+  TextView number=txt(hiddenCardNumber(id),18,WHITE,true);number.setLetterSpacing(.015f);
+  android.widget.FrameLayout.LayoutParams nlp=new android.widget.FrameLayout.LayoutParams(-1,dp(34),Gravity.TOP);
+  nlp.leftMargin=dp(17);nlp.rightMargin=dp(10);nlp.topMargin=dp(105);face.addView(number,nlp);
+  TextView amount=txt("Баланс: "+rub(cardBalance(id)),15,WHITE,true);
+  android.widget.FrameLayout.LayoutParams alp=new android.widget.FrameLayout.LayoutParams(-1,dp(30),Gravity.TOP);
+  alp.leftMargin=dp(17);alp.topMargin=dp(144);face.addView(amount,alp);
+  TextView footer=txt((id==2?"Кредитная":id==1?"Зарплатная":"Дебетовая")+" карта     08/30",11,0xfff3c9d4,true);
+  android.widget.FrameLayout.LayoutParams flp=new android.widget.FrameLayout.LayoutParams(-1,dp(23),Gravity.BOTTOM);
+  flp.leftMargin=dp(17);flp.bottomMargin=dp(8);face.addView(footer,flp);
+  final boolean[] showing={false};
+  final android.animation.ValueAnimator glow=android.animation.ValueAnimator.ofFloat(0f,1f,0f);
+  glow.setDuration(750);glow.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+  glow.addUpdateListener(animation->{
+   float v=(Float)animation.getAnimatedValue();
+   face.setElevation(dp(6+v*17));
+   face.setAlpha(.92f+v*.08f);
+  });
+  outer.setOnTouchListener((v,event)->{
+   int action=event.getActionMasked();
+   if(action==MotionEvent.ACTION_DOWN){
+    showing[0]=true;number.setText(demoCardNumber(id));glow.start();return true;
+   }
+   if(action==MotionEvent.ACTION_UP){
+    number.setText(hiddenCardNumber(id));showing[0]=false;glow.cancel();face.setAlpha(1f);
+    if(event.getEventTime()-event.getDownTime()<280){v.performClick();}
+    return true;
+   }
+   if(action==MotionEvent.ACTION_CANCEL){number.setText(hiddenCardNumber(id));showing[0]=false;glow.cancel();face.setAlpha(1f);return true;}
+   return true;
+  });
+  return outer;
  }
  void cardPreview(int id,String label,double amount,int color){
   Dialog dialog=new Dialog(this);
@@ -265,15 +296,15 @@ public class MainActivity extends Activity {
  }
  void creditPanelDialog(){show("Карты");}
  void creditPanel(){
-  heading("Кредитная карта · ДЕМО");
+  heading("Кредитная карта");
   LinearLayout p=panel();line(p,"Баланс кредитной карты: "+rub(creditAvailable),"Задолженность: "+rub(creditDebt));
   if(creditDebt>0){long remaining=Math.max(0,(creditDue-System.currentTimeMillis()+86399999L)/86400000L);line(p,"Льготный период: "+remaining+" дн.","7 дней без процентов, затем однократно 10% от суммы кредита");button("Погасить кредит",()->repayCredit());}
-  else button("Оформить демо-кредит",()->chooseCredit());
+  else button("Оформить кредит",()->chooseCredit());
  }
  void chooseCredit(){
   final String[] options={"25 000 ₽","50 000 ₽","75 000 ₽","120 000 ₽"};
   final int[] values={25000,50000,75000,120000};
-  new AlertDialog.Builder(this).setTitle("Демо-кредит на 7 дней").setMessage("0% первые 7 дней. После срока однократно начисляется 10% от исходной суммы. Только виртуальные деньги.")
+  new AlertDialog.Builder(this).setTitle("Кредит на 7 дней").setMessage("0% первые 7 дней. После срока однократно начисляется 10% от исходной суммы. Только виртуальные деньги.")
    .setItems(options,(d,which)->{if(creditDebt>0){Toast.makeText(this,"Сначала погаси текущий кредит",Toast.LENGTH_SHORT).show();return;}creditPrincipal=values[which];creditDebt=values[which];creditAvailable=values[which];creditDue=System.currentTimeMillis()+7L*86400000L;lastPenaltyDay=0;history.add(0,"Демо-кредит +"+rub(values[which]));save();show("Карты");})
    .setNegativeButton("Отмена",null).show();
  }
