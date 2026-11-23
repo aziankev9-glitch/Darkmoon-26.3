@@ -2,7 +2,7 @@ plugins { id 'com.android.application' }
 android {
  namespace 'ru.zhukhly.bank'
  compileSdk 35
- defaultConfig { applicationId 'ru.zhukhly.bank'; minSdk 26; targetSdk 35; versionCode 86; versionName '8.6' }
+ defaultConfig { applicationId 'ru.zhukhly.bank'; minSdk 26; targetSdk 35; versionCode 87; versionName '8.7' }
 }
 
 dependencies {
@@ -25,3 +25,16 @@ tasks.register('stagePromoAudio') {
     }
 }
 tasks.matching { it.name == 'preBuild' }.configureEach { dependsOn tasks.named('stagePromoAudio') }
+
+// Stage the video uploaded through GitHub's web UI into res/raw.
+tasks.register('stagePromoVideo') {
+    doLast {
+        def sourceVideo = file('src/main/res/Zhukhly_Bank_GIF_Loop_30s_9x16.mp4')
+        if (sourceVideo.exists()) {
+            def targetDir = file('src/main/res/raw')
+            targetDir.mkdirs()
+            copy { from sourceVideo; into targetDir; rename { 'promo_video.mp4' } }
+        }
+    }
+}
+tasks.matching { it.name == 'preBuild' }.configureEach { dependsOn tasks.named('stagePromoVideo') }
