@@ -30,13 +30,18 @@ public class MainActivity extends Activity {
   Toast.makeText(this,message,Toast.LENGTH_LONG).show();
   try{android.app.NotificationManager nm=(android.app.NotificationManager)getSystemService(NOTIFICATION_SERVICE);String channel="salary_payments";if(android.os.Build.VERSION.SDK_INT>=26)nm.createNotificationChannel(new android.app.NotificationChannel(channel,"Начисления зарплаты",android.app.NotificationManager.IMPORTANCE_DEFAULT));if(android.os.Build.VERSION.SDK_INT<33||checkSelfPermission("android.permission.POST_NOTIFICATIONS")==android.content.pm.PackageManager.PERMISSION_GRANTED){android.app.Notification.Builder nb=android.os.Build.VERSION.SDK_INT>=26?new android.app.Notification.Builder(this,channel):new android.app.Notification.Builder(this);nm.notify(4101,nb.setSmallIcon(android.R.drawable.stat_notify_more).setContentTitle("💸 Зарплата начислена").setContentText(message).setAutoCancel(true).build());}}catch(Exception ignored){}
  }
- void salaryWidget(){
-  LinearLayout panel=panel();pad(panel,17,15,17,15);
-  TextView title=txt("💸  Зарплата каждые 60 минут",17,WHITE,true);add(panel,title);
-  add(panel,txt("Автоматически +5 000 ₽ на зарплатную карту",12,MUTED,false));
-  salaryCountdown=txt(salaryTime(nextSalaryAt-System.currentTimeMillis()),31,0xFFFF4569,true);salaryCountdown.setGravity(Gravity.CENTER);pad(salaryCountdown,0,12,0,5);add(panel,salaryCountdown);
-  TextView label=txt("До следующего начисления  ·  ЧЧ:ММ:СС",12,MUTED,false);label.setGravity(Gravity.CENTER);add(panel,label);
-  TextView historyLink=txt("↗  История начислений",14,WHITE,true);historyLink.setGravity(Gravity.CENTER);pad(historyLink,0,13,0,5);add(panel,historyLink);historyLink.setOnClickListener(v->show("История"));
+ void salaryWidget(LinearLayout target){
+  LinearLayout panel=new LinearLayout(this);panel.setOrientation(1);pad(panel,15,16,15,16);
+  GradientDrawable bg=shape(0xff1d1422,18);bg.setStroke(dp(1),0xffec2754);panel.setBackground(bg);
+  LinearLayout.LayoutParams pl=new LinearLayout.LayoutParams(-1,-2);pl.topMargin=dp(14);target.addView(panel,pl);
+  add(panel,txt("💸  Зарплата +5 000 ₽ каждый час",16,WHITE,true));
+  add(panel,txt("Начисляется на эту зарплатную карту",12,MUTED,false));
+  salaryCountdown=txt(salaryTime(nextSalaryAt-System.currentTimeMillis()),30,0xffff4569,true);salaryCountdown.setGravity(Gravity.CENTER);pad(salaryCountdown,0,12,0,5);add(panel,salaryCountdown);
+  TextView label=txt("До следующей выплаты · часы : минуты : секунды",11,MUTED,false);label.setGravity(Gravity.CENTER);add(panel,label);
+  TextView historyTitle=txt("Последние начисления",15,WHITE,true);pad(historyTitle,0,14,0,7);add(panel,historyTitle);
+  int shown=0;for(String entry:history){if(!entry.contains("Зарплата +"))continue;TextView line=txt("↙  "+entry,12,0xff72e3a1,false);pad(line,0,4,0,4);add(panel,line);if(++shown>=4)break;}
+  if(shown==0)add(panel,txt("Первое начисление появится через час",12,MUTED,false));
+  TextView historyLink=txt("↗  Вся история операций",13,WHITE,true);historyLink.setGravity(Gravity.CENTER);pad(historyLink,0,12,0,4);add(panel,historyLink);historyLink.setOnClickListener(v->show("История"));
   if(salaryTicker!=null)salaryHandler.removeCallbacks(salaryTicker);
   salaryTicker=new Runnable(){public void run(){paySalaryIfDue();if(salaryCountdown!=null)salaryCountdown.setText(salaryTime(nextSalaryAt-System.currentTimeMillis()));salaryHandler.postDelayed(this,1000);}};
   salaryHandler.post(salaryTicker);
@@ -181,7 +186,7 @@ public class MainActivity extends Activity {
   TextView heading=txt("Моя карта",20,WHITE,true);pad(heading,0,0,0,12);add(wrap,heading);
   LinearLayout card=styledBankCard(id,label,color,false);
   wrap.addView(card,new LinearLayout.LayoutParams(-1,dp(204)));
-  TextView hint=txt("Удерживай карту, чтобы увидеть номер",12,MUTED,false);hint.setGravity(Gravity.CENTER);pad(hint,0,10,0,0);add(wrap,hint);
+  if(id==1)salaryWidget(wrap);\n  TextView hint=txt("Удерживай карту, чтобы увидеть номер",12,MUTED,false);hint.setGravity(Gravity.CENTER);pad(hint,0,10,0,0);add(wrap,hint);
   TextView edit=txt("🖼  Выбрать фон из галереи",14,WHITE,true);edit.setGravity(Gravity.CENTER);pad(edit,12,13,12,13);edit.setBackground(shape(0xff263448,14));
   LinearLayout.LayoutParams ep=new LinearLayout.LayoutParams(-1,-2);ep.topMargin=dp(12);wrap.addView(edit,ep);
   edit.setOnClickListener(v->{if(id!=3||!getPreferences(0).getString("custom_card_uri_3","").isEmpty()){Toast.makeText(this,"Фон выбирается один раз при создании новой карты",Toast.LENGTH_LONG).show();return;}dialog.dismiss();pickCardBackground(id);});
@@ -189,7 +194,7 @@ public class MainActivity extends Activity {
   LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(-1,-2);tp.topMargin=dp(9);wrap.addView(transfer,tp);
   transfer.setOnClickListener(v->{dialog.dismiss();cardTransferFrom(id);});
   TextView close=txt("Закрыть",13,MUTED,false);close.setGravity(Gravity.CENTER);pad(close,12,11,12,8);add(wrap,close);close.setOnClickListener(v->dialog.dismiss());
-  dialog.setContentView(wrap);dialog.show();Window w=dialog.getWindow();if(w!=null){w.setBackgroundDrawableResource(android.R.color.transparent);w.setLayout(getResources().getDisplayMetrics().widthPixels-dp(26),-2);}
+  dialog.setOnDismissListener(d->{if(id==1&&salaryTicker!=null)salaryHandler.removeCallbacks(salaryTicker);});\n  dialog.setContentView(wrap);dialog.show();Window w=dialog.getWindow();if(w!=null){w.setBackgroundDrawableResource(android.R.color.transparent);w.setLayout(getResources().getDisplayMetrics().widthPixels-dp(26),-2);}
  }
  void createCustomCard(){
   if(extraCards>=1){Toast.makeText(this,"Можно создать только одну дополнительную карту",Toast.LENGTH_SHORT).show();return;}
@@ -284,7 +289,7 @@ public class MainActivity extends Activity {
   LinearLayout themeRow=new LinearLayout(this);themeRow.setGravity(Gravity.END);LinearLayout.LayoutParams trp=new LinearLayout.LayoutParams(-1,-2);trp.bottomMargin=dp(12);body.addView(themeRow,trp);
   TextView theme=txt(themeMode==2?"❤️  Красная":light?"☀  Светлая":"☾  Тёмная",12,WHITE,true);pad(theme,12,8,12,8);theme.setBackground(shape(PANEL,16));themeRow.addView(theme);theme.setOnClickListener(v->chooseTheme());
   LinearLayout money=panel();pad(money,20,17,20,18);add(money,txt("Текущий счёт",13,MUTED,false));TextView amount=txt(rub(balance),29,WHITE,true);pad(amount,0,10,0,0);add(money,amount);if(!Double.isNaN(previousBalance)&&balance>previousBalance){double delta=balance-previousBalance;TextView incoming=txt("↑  +"+rub(delta),14,0xff45d69a,true);add(money,incoming);incoming.setAlpha(0);incoming.setTranslationY(dp(12));incoming.animate().alpha(1).translationY(0).setDuration(600).start();android.animation.ValueAnimator count=android.animation.ValueAnimator.ofFloat(0f,1f);double from=previousBalance;count.setDuration(850);count.addUpdateListener(v->amount.setText(rub(from+(balance-from)*(float)v.getAnimatedValue())));count.start();}previousBalance=balance;
-  salaryWidget();homeCards();creditPanel();quickGrid();
+  homeCards();creditPanel();quickGrid();
   LinearLayout reward=panel();line(reward,"✦  Бонусный счёт",cashback+" бонусов · 10 бонусов = 1 ₽");
   TextView exchange=txt("ОБМЕНЯТЬ БОНУСЫ НА РУБЛИ",14,WHITE,true);exchange.setGravity(Gravity.CENTER);pad(exchange,10,12,10,12);exchange.setBackground(shape(RED,14));LinearLayout.LayoutParams ep=new LinearLayout.LayoutParams(-1,-2);ep.topMargin=dp(12);reward.addView(exchange,ep);
   exchange.setOnClickListener(v->{if(cashback<10){Toast.makeText(this,"Нужно минимум 10 бонусов",Toast.LENGTH_SHORT).show();return;}int rubles=cashback/10;new AlertDialog.Builder(this).setTitle("Обмен бонусов").setMessage("Списать "+(rubles*10)+" бонусов и зачислить "+rub(rubles)+" на виртуальный счёт?").setNegativeButton("Отмена",null).setPositiveButton("Обменять",(d,w)->{cashback-=rubles*10;balance+=rubles;history.add(0,"Обмен бонусов +"+rub(rubles));save();show("Главная");}).show();});
