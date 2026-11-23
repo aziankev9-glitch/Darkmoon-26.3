@@ -333,17 +333,37 @@ public class MainActivity extends Activity {
   if(creditDebt>0){new AlertDialog.Builder(this).setTitle("Кредитная карта").setMessage("Задолженность: "+rub(creditDebt)+"\\nПогаси текущий кредит перед оформлением нового.").setPositiveButton("Погасить",(d,w)->{show("Карты");repayCredit();}).setNegativeButton("Закрыть",null).show();return;}
   final int[] amounts={25000,50000,75000,150000};
   final int[] selected={0};
-  LinearLayout panel=new LinearLayout(this);panel.setOrientation(1);panel.setPadding(dp(20),dp(20),dp(20),dp(14));panel.setBackground(shape(0xFF180C19,22));
-  TextView title=txt("✦  Оформление кредита",23,WHITE,true);panel.addView(title);
-  TextView subtitle=txt("Кредитная карта Жухлый Банк",13,0xFFBCAAB6,false);panel.addView(subtitle);spaceIn(panel,16);
-  TextView label=txt("Выбери сумму кредита",17,WHITE,true);panel.addView(label);
-  android.widget.RadioGroup group=new android.widget.RadioGroup(this);group.setOrientation(1);
-  for(int i=0;i<amounts.length;i++){final int idx=i;android.widget.RadioButton option=new android.widget.RadioButton(this);option.setId(20001+i);option.setText(rub(amounts[i]));option.setTextSize(17);option.setTextColor(WHITE);option.setButtonTintList(android.content.res.ColorStateList.valueOf(0xFFFF1744));option.setPadding(dp(10),dp(7),dp(8),dp(7));group.addView(option);option.setChecked(i==0);option.setOnClickListener(v->selected[0]=idx);}
-  panel.addView(group);spaceIn(panel,12);
-  TextView terms=txt("◷  7 дней без процентов (0%)\\n\\n⚠  С 8-го дня: 5% от суммы кредита ежедневно. Плата списывается с основной карты в счёт задолженности. При нехватке средств остаток сохраняется.\\n\\nВсе операции виртуальные.",14,WHITE,false);terms.setPadding(dp(12),dp(12),dp(12),dp(12));terms.setBackground(shape(0xFF2B1525,15));panel.addView(terms);
-  TextView summary=txt("К выдаче: "+rub(amounts[0])+"   •   Просрочка: "+rub(amounts[0]*0.05)+" / день",14,0xFFFF6688,true);panel.addView(summary);
-  group.setOnCheckedChangeListener((g,id)->{int i=g.indexOfChild(g.findViewById(id));if(i>=0&&i<amounts.length){selected[0]=i;summary.setText("К выдаче: "+rub(amounts[i])+"   •   Просрочка: "+rub(amounts[i]*0.05)+" / день");}});
-  AlertDialog dialog=new AlertDialog.Builder(this).setView(panel).setNegativeButton("Отмена",null).setPositiveButton("Оформить кредит",(d,w)->{int amount=amounts[selected[0]];creditPrincipal=amount;creditDebt=amount;creditAvailable=amount;creditDue=System.currentTimeMillis()+7L*86400000L;lastPenaltyDay=0;history.add(0,"Кредит +"+rub(amount));save();show("Карты");}).create();dialog.show();dialog.getButton(-1).setTextColor(0xFFFF1744);dialog.getButton(-2).setTextColor(0xFFBBBBBB);
+  final Dialog dialog=new Dialog(this);
+  LinearLayout panel=new LinearLayout(this);panel.setOrientation(1);pad(panel,22,24,22,22);
+  GradientDrawable shell=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff231222,0xff120f1b,0xff0b111c});shell.setCornerRadius(dp(26));shell.setStroke(dp(1),0xff85334f);panel.setBackground(shell);
+  TextView eyebrow=txt("ЖУХЛЫЙ БАНК  ·  КРЕДИТНАЯ КАРТА",11,0xffff8fa6,true);add(panel,eyebrow);spaceIn(panel,9);
+  TextView title=txt("Твой кредит.\\nТвои возможности.",25,WHITE,true);add(panel,title);spaceIn(panel,7);
+  add(panel,txt("Выбери сумму — она поступит на кредитную карту",13,MUTED,false));spaceIn(panel,20);
+  TextView label=txt("СУММА КРЕДИТА",12,0xffd9a9b8,true);add(panel,label);spaceIn(panel,11);
+  final TextView[] options=new TextView[4];
+  LinearLayout first=new LinearLayout(this);first.setOrientation(0);add(panel,first);
+  LinearLayout second=new LinearLayout(this);second.setOrientation(0);LinearLayout.LayoutParams sr=new LinearLayout.LayoutParams(-1,-2);sr.topMargin=dp(10);panel.addView(second,sr);
+  TextView payout=txt(rub(amounts[0]),27,WHITE,true);TextView fee=txt(rub(amounts[0]*0.05)+" / день",14,0xffff93a8,true);
+  for(int i=0;i<4;i++){
+   final int index=i;TextView option=txt(rub(amounts[i]),15,WHITE,true);option.setGravity(Gravity.CENTER);pad(option,4,17,4,17);
+   LinearLayout row=i<2?first:second;LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);if(i%2==1)lp.leftMargin=dp(10);row.addView(option,lp);options[i]=option;
+   option.setOnClickListener(v->{selected[0]=index;for(int j=0;j<4;j++){GradientDrawable tile=shape(j==index?0xff702039:0xff222534,15);tile.setStroke(dp(j==index?2:1),j==index?0xffff416d:0xff394054);options[j].setBackground(tile);}payout.setText(rub(amounts[index]));fee.setText(rub(amounts[index]*0.05)+" / день");});
+  }
+  options[0].performClick();spaceIn(panel,18);
+  LinearLayout summary=new LinearLayout(this);summary.setOrientation(1);pad(summary,16,16,16,16);
+  GradientDrawable sumBg=shape(0xff2c1729,17);sumBg.setStroke(dp(1),0xff643047);summary.setBackground(sumBg);add(panel,summary);
+  add(summary,txt("К ЗАЧИСЛЕНИЮ НА КАРТУ",11,0xffffa1b5,true));add(summary,payout);spaceIn(summary,13);
+  add(summary,txt("ЛЬГОТНЫЙ ПЕРИОД",11,0xffb4a7b6,true));add(summary,txt("7 дней · 0%",19,0xff9ce7c1,true));spaceIn(summary,13);
+  add(summary,txt("ПОСЛЕ 7 ДНЕЙ",11,0xffb4a7b6,true));add(summary,fee);
+  spaceIn(panel,14);
+  add(panel,txt("После льготного периода начисляется 5% от суммы кредита за каждый день просрочки. Списание — с основной карты в счёт долга.",12,MUTED,false));spaceIn(panel,7);
+  add(panel,txt("Все суммы и операции виртуальные.",11,0xff9a8194,false));spaceIn(panel,20);
+  TextView confirm=txt("ОФОРМИТЬ КРЕДИТ   →",15,WHITE,true);confirm.setGravity(Gravity.CENTER);pad(confirm,8,17,8,17);confirm.setBackground(shape(0xffed1748,16));add(panel,confirm);
+  confirm.setOnClickListener(v->{int amount=amounts[selected[0]];creditPrincipal=amount;creditDebt=amount;creditAvailable=amount;creditDue=System.currentTimeMillis()+7L*86400000L;lastPenaltyDay=0;history.add(0,"Кредит +"+rub(amount));save();dialog.dismiss();show("Карты");});
+  TextView cancel=txt("Не сейчас",13,MUTED,false);cancel.setGravity(Gravity.CENTER);pad(cancel,0,16,0,2);add(panel,cancel);cancel.setOnClickListener(v->dialog.dismiss());
+  ScrollView scroll=new ScrollView(this);scroll.setFillViewport(false);scroll.addView(panel);scroll.setBackgroundColor(Color.TRANSPARENT);
+  dialog.setContentView(scroll);Window win=dialog.getWindow();if(win!=null){win.setBackgroundDrawableResource(android.R.color.transparent);win.setLayout((int)(getResources().getDisplayMetrics().widthPixels*0.92),-2);win.setDimAmount(0.76f);win.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);}
+  dialog.show();win=dialog.getWindow();if(win!=null){win.setBackgroundDrawableResource(android.R.color.transparent);win.setLayout((int)(getResources().getDisplayMetrics().widthPixels*0.92),-2);}
  }
  void spaceIn(LinearLayout parent,int height){View v=new View(this);parent.addView(v,new LinearLayout.LayoutParams(1,dp(height)));}
  void repayCredit(){heading("Погашение кредита");EditText amount=field("Сумма погашения, ₽",8194);button("Погасить",()->{try{double sum=Double.parseDouble(amount.getText().toString().replace(',','.'));if(!Double.isFinite(sum)||sum<=0||sum>balance||creditDebt<=0)throw new Exception();double paid=Math.min(sum,creditDebt);balance-=paid;creditDebt=Math.max(0,Math.round((creditDebt-paid)*100)/100.0);if(creditDebt==0){creditAvailable=0;creditDue=0;lastPenaltyDay=0;creditPrincipal=0;}history.add(0,"Погашение кредита · "+rub(paid));save();show("Карты");}catch(Exception e){Toast.makeText(this,"Недостаточно средств или неверная сумма",Toast.LENGTH_SHORT).show();}});}
