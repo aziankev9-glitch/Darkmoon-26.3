@@ -349,7 +349,7 @@ public class MainActivity extends Activity {
    LinearLayout row=i<2?first:second;LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,-2,1);if(i%2==1)lp.leftMargin=dp(10);row.addView(option,lp);options[i]=option;
    option.setOnClickListener(v->{selected[0]=index;for(int j=0;j<4;j++){GradientDrawable tile=shape(j==index?0xff702039:0xff222534,15);tile.setStroke(dp(j==index?2:1),j==index?0xffff416d:0xff394054);options[j].setBackground(tile);}payout.setText(rub(amounts[index]));fee.setText(rub(amounts[index]*0.05)+" / день");});
   }
-  options[0].performClick();spaceIn(panel,18);
+  for(int j=0;j<4;j++){GradientDrawable tile=shape(j==0?0xff702039:0xff222534,15);tile.setStroke(dp(j==0?2:1),j==0?0xffff416d:0xff394054);options[j].setBackground(tile);}spaceIn(panel,18);
   LinearLayout summary=new LinearLayout(this);summary.setOrientation(1);pad(summary,16,16,16,16);
   GradientDrawable sumBg=shape(0xff2c1729,17);sumBg.setStroke(dp(1),0xff643047);summary.setBackground(sumBg);add(panel,summary);
   add(summary,txt("К ЗАЧИСЛЕНИЮ НА КАРТУ",11,0xffffa1b5,true));add(summary,payout);spaceIn(summary,13);
