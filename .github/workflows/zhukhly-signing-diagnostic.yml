@@ -1,0 +1,40 @@
+name: Diagnose Bank 5.7 signing compatibility
+on:
+  workflow_dispatch:
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore historical signing key cache (read only)
+        id: historical
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: zhukhly-demo-signing-v1
+      - name: Check historical key certificate
+        env:
+          CACHE_HIT: ${{ steps.historical.outputs.cache-hit }}
+        run: |
+          echo "Historical signing cache hit: $CACHE_HIT"
+          if [ -f "$HOME/.android/debug.keystore" ]; then
+            keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey | grep 'SHA256:' || true
+          else
+            echo "Historical signing key is not in the cache."
+          fi
+      - name: Check installed-version 5.7 release certificate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release download v5.7 -p '*.apk' -D /tmp/old-bank; then
+            APK=$(find /tmp/old-bank -name '*.apk' -print -quit)
+            if [ -n "$APK" ]; then
+              "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK" | grep 'SHA-256 digest' || true
+            fi
+          else
+            echo "Release v5.7 APK unavailable; cannot verify its signing certificate."
+          fi
+      - name: Diagnostic instructions
+        run: echo "Compare the two SHA-256 certificate fingerprints. Never upload the private signing key as an artifact."
