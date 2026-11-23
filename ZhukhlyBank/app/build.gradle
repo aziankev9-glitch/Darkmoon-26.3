@@ -2,10 +2,26 @@ plugins { id 'com.android.application' }
 android {
  namespace 'ru.zhukhly.bank'
  compileSdk 35
- defaultConfig { applicationId 'ru.zhukhly.bank'; minSdk 26; targetSdk 35; versionCode 85; versionName '8.5' }
+ defaultConfig { applicationId 'ru.zhukhly.bank'; minSdk 26; targetSdk 35; versionCode 86; versionName '8.6' }
 }
 
 dependencies {
  implementation 'androidx.core:core:1.13.1'
  implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
 }
+
+// Stage the uploaded MP3 under an Android-compatible resource name before resource merging.
+tasks.register('stagePromoAudio') {
+    doLast {
+        def sourceAudio = file('src/main/res/Big Baby Tape - Nike (GTA 6).mp3')
+        if (!sourceAudio.exists()) throw new GradleException('Promo audio file missing: ' + sourceAudio)
+        def targetDir = file('src/main/res/raw')
+        targetDir.mkdirs()
+        copy {
+            from sourceAudio
+            into targetDir
+            rename { 'promo_music.mp3' }
+        }
+    }
+}
+tasks.matching { it.name == 'preBuild' }.configureEach { dependsOn tasks.named('stagePromoAudio') }
