@@ -523,31 +523,52 @@ public class MainActivity extends Activity {
 
  void confirmTransfer(String bank,String number,double sum){Dialog dialog=new Dialog(this);LinearLayout sheet=new LinearLayout(this);sheet.setOrientation(1);pad(sheet,24,24,24,24);sheet.setBackground(shape(PANEL,28));TextView title=txt("Подтвердить перевод",22,WHITE,true);add(sheet,title);TextView amount=txt(rub(sum),34,WHITE,true);pad(amount,0,20,0,20);add(sheet,amount);TextView details=txt("Получатель  "+number+"\n\nБанк  "+bank,16,MUTED,false);add(sheet,details);TextView notice=txt("Виртуальная операция · реальные деньги не отправляются",11,MUTED,false);pad(notice,0,20,0,18);add(sheet,notice);TextView yes=txt("Подтвердить",17,0xffffffff,true);yes.setGravity(Gravity.CENTER);pad(yes,8,18,8,18);yes.setBackground(shape(RED,16));add(sheet,yes);TextView no=txt("Отмена",15,MUTED,true);no.setGravity(Gravity.CENTER);pad(no,8,18,8,8);add(sheet,no);no.setOnClickListener(v->dialog.dismiss());yes.setOnClickListener(v->{dialog.dismiss();balance=Math.round((balance-sum)*100)/100.0;history.add(0,"−"+rub(sum)+" · "+bank+" · "+number+" · "+new java.text.SimpleDateFormat("dd.MM.yyyy HH:mm",Locale.getDefault()).format(new Date()));save();showPaymentResult(sum,bank+" · "+number,"СБП","История");});dialog.setContentView(sheet);dialog.show();Window w=dialog.getWindow();if(w!=null){w.setBackgroundDrawableResource(android.R.color.transparent);w.setLayout(getResources().getDisplayMetrics().widthPixels-dp(32),-2);w.setDimAmount(.7f);w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);}sheet.setAlpha(0f);sheet.setTranslationY(dp(50));sheet.animate().alpha(1f).translationY(0).setDuration(280).start();}
 
- android.widget.VideoView promoVideo;
- void stopPromoVideo(){if(promoVideo!=null){try{promoVideo.stopPlayback();}catch(Exception ignored){}promoVideo=null;}}
+ android.media.MediaPlayer promoVideoPlayer;
+ android.view.TextureView promoTexture;
+ void stopPromoVideo(){if(promoVideoPlayer!=null){try{promoVideoPlayer.stop();}catch(Exception ignored){}try{promoVideoPlayer.release();}catch(Exception ignored){}promoVideoPlayer=null;}promoTexture=null;}
  void closePromo(){stopPromoVideo();pinScreen();}
  void launchPromo(){
    stopPromoVideo();playPromoMusic();
+   getWindow().getDecorView().setSystemUiVisibility(5894|1024|512);
    getWindow().setStatusBarColor(0xff100004);getWindow().setNavigationBarColor(0xff100004);
    android.widget.FrameLayout frame=new android.widget.FrameLayout(this);frame.setBackgroundColor(0xff100004);setContentView(frame);
    int videoRes=getResources().getIdentifier("promo_video","raw",getPackageName());
    if(videoRes!=0){
-     promoVideo=new android.widget.VideoView(this);
-     frame.addView(promoVideo,new android.widget.FrameLayout.LayoutParams(-1,-1));
-     promoVideo.setVideoURI(android.net.Uri.parse("android.resource://"+getPackageName()+"/"+videoRes));
-     promoVideo.setOnPreparedListener(mp->{mp.setLooping(true);mp.setVolume(0f,0f);promoVideo.start();});
-     promoVideo.setOnErrorListener((mp,what,extra)->{android.widget.ImageView fallback=new android.widget.ImageView(this);fallback.setImageResource(R.drawable.promo_banner);fallback.setScaleType(android.widget.ImageView.ScaleType.FIT_XY);frame.addView(fallback,0,new android.widget.FrameLayout.LayoutParams(-1,-1));return true;});
-     promoVideo.start();
-   }else{
-     android.widget.ImageView artwork=new android.widget.ImageView(this);artwork.setImageResource(R.drawable.promo_banner);artwork.setScaleType(android.widget.ImageView.ScaleType.FIT_XY);frame.addView(artwork,new android.widget.FrameLayout.LayoutParams(-1,-1));
-   }
+     promoTexture=new android.view.TextureView(this);
+     android.view.TextureView texture=promoTexture;
+     frame.addView(texture,new android.widget.FrameLayout.LayoutParams(-1,-1));
+     texture.setSurfaceTextureListener(new android.view.TextureView.SurfaceTextureListener(){
+       public void onSurfaceTextureAvailable(android.graphics.SurfaceTexture st,int w,int h){
+         try{
+           android.media.MediaPlayer mp=new android.media.MediaPlayer();promoVideoPlayer=mp;
+           android.content.res.AssetFileDescriptor afd=getResources().openRawResourceFd(videoRes);
+           mp.setDataSource(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());afd.close();
+           mp.setSurface(new android.view.Surface(st));mp.setLooping(true);mp.setVolume(0f,0f);
+           mp.setOnVideoSizeChangedListener((player,vw,vh)->cropPromoVideo(texture,vw,vh));
+           mp.setOnPreparedListener(player->{cropPromoVideo(texture,player.getVideoWidth(),player.getVideoHeight());player.start();});
+           mp.setOnErrorListener((player,what,extra)->{showPromoFallback(frame);return true;});
+           mp.prepareAsync();
+         }catch(Exception ex){showPromoFallback(frame);}
+       }
+       public void onSurfaceTextureSizeChanged(android.graphics.SurfaceTexture st,int w,int h){if(promoVideoPlayer!=null)cropPromoVideo(texture,promoVideoPlayer.getVideoWidth(),promoVideoPlayer.getVideoHeight());}
+       public boolean onSurfaceTextureDestroyed(android.graphics.SurfaceTexture st){stopPromoVideo();return true;}
+       public void onSurfaceTextureUpdated(android.graphics.SurfaceTexture st){}
+     });
+   }else{showPromoFallback(frame);}
    android.widget.TextView close=txt("✕",27,0xffffffff,true);close.setGravity(Gravity.CENTER);close.setBackground(shape(0xdd260814,22));close.setContentDescription("Закрыть рекламу");
-   android.widget.FrameLayout.LayoutParams clp=new android.widget.FrameLayout.LayoutParams(dp(48),dp(48),Gravity.TOP|Gravity.RIGHT);clp.topMargin=dp(16);clp.rightMargin=dp(16);frame.addView(close,clp);close.setOnClickListener(v->closePromo());
+   android.widget.FrameLayout.LayoutParams clp=new android.widget.FrameLayout.LayoutParams(dp(48),dp(48),Gravity.TOP|Gravity.RIGHT);clp.topMargin=dp(24);clp.rightMargin=dp(16);frame.addView(close,clp);close.setOnClickListener(v->closePromo());
    android.widget.TextView enter=txt("Продолжить ко входу",15,0xffffffff,true);enter.setGravity(Gravity.CENTER);enter.setBackground(shape(0xdd9d102a,18));
-   android.widget.FrameLayout.LayoutParams elp=new android.widget.FrameLayout.LayoutParams(-1,dp(54),Gravity.BOTTOM);elp.leftMargin=dp(26);elp.rightMargin=dp(26);elp.bottomMargin=dp(22);frame.addView(enter,elp);enter.setOnClickListener(v->closePromo());
+   android.widget.FrameLayout.LayoutParams elp=new android.widget.FrameLayout.LayoutParams(-1,dp(54),Gravity.BOTTOM);elp.leftMargin=dp(26);elp.rightMargin=dp(26);elp.bottomMargin=dp(28);frame.addView(enter,elp);enter.setOnClickListener(v->closePromo());
+ }
+ void showPromoFallback(android.widget.FrameLayout frame){android.widget.ImageView fallback=new android.widget.ImageView(this);fallback.setImageResource(R.drawable.promo_banner);fallback.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);frame.addView(fallback,0,new android.widget.FrameLayout.LayoutParams(-1,-1));}
+ void cropPromoVideo(android.view.TextureView texture,int videoW,int videoH){
+   int w=texture.getWidth(),h=texture.getHeight();if(w<=0||h<=0||videoW<=0||videoH<=0)return;
+   float scale=Math.max((float)w/videoW,(float)h/videoH);
+   float sx=videoW*scale/w,sy=videoH*scale/h;
+   android.graphics.Matrix matrix=new android.graphics.Matrix();matrix.setScale(sx,sy,w/2f,h/2f);texture.setTransform(matrix);
  }
 
- void pinScreen(){stopPromoVideo();stopPromoMusic();getWindow().setStatusBarColor(0xff080e16);getWindow().setNavigationBarColor(0xff080e16);LinearLayout screen=new LinearLayout(this);screen.setOrientation(1);screen.setGravity(Gravity.CENTER);pad(screen,30,30,30,30);screen.setBackgroundColor(0xff080e16);setContentView(screen);android.widget.FrameLayout logo=createDoorLogo(82);android.widget.LinearLayout.LayoutParams logoParams=new android.widget.LinearLayout.LayoutParams(dp(82),dp(82));logoParams.gravity=Gravity.CENTER;logoParams.bottomMargin=dp(12);screen.addView(logo,logoParams);TextView name=txt("Жухлый Банк",26,0xfff4f7fa,true);name.setGravity(Gravity.CENTER);add(screen,name);TextView prompt=txt("Введите PIN-код",17,0xff96a7b8,false);prompt.setGravity(Gravity.CENTER);pad(prompt,0,30,0,20);add(screen,prompt);TextView dots=txt("○  ○  ○  ○",30,0xfff4f7fa,true);dots.setGravity(Gravity.CENTER);pad(dots,0,0,0,24);add(screen,dots);final StringBuilder entered=new StringBuilder();String[] keys={"1","2","3","4","5","6","7","8","9","","0","⌫"};for(int row=0;row<4;row++){LinearLayout line=new LinearLayout(this);line.setGravity(Gravity.CENTER);add(screen,line);for(int col=0;col<3;col++){String key=keys[row*3+col];TextView b=txt(key,25,0xfff4f7fa,true);b.setGravity(Gravity.CENTER);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(70),1);lp.setMargins(dp(4),dp(4),dp(4),dp(4));line.addView(b,lp);if(!key.isEmpty()){b.setBackground(shape(0xff172333,18));b.setOnClickListener(v->{if(key.equals("⌫")){if(entered.length()>0)entered.deleteCharAt(entered.length()-1);}else if(entered.length()<4)entered.append(key);StringBuilder mask=new StringBuilder();for(int i=0;i<4;i++)mask.append(i<entered.length()?"●":"○").append(i==3?"":"  ");dots.setText(mask.toString());if(entered.length()==4){if(entered.toString().equals("1488")){screen.animate().alpha(0f).setDuration(220).withEndAction(()->show("Главная")).start();}else{entered.setLength(0);prompt.setText("Неверный PIN-код");prompt.setTextColor(RED);dots.animate().translationX(dp(12)).setDuration(70).withEndAction(()->dots.animate().translationX(0).setDuration(70).start()).start();new Handler(Looper.getMainLooper()).postDelayed(()->dots.setText("○  ○  ○  ○"),350);}}});}}}}
+ void pinScreen(){stopPromoVideo();stopPromoMusic();getWindow().getDecorView().setSystemUiVisibility(0);getWindow().setStatusBarColor(0xff080e16);getWindow().setNavigationBarColor(0xff080e16);LinearLayout screen=new LinearLayout(this);screen.setOrientation(1);screen.setGravity(Gravity.CENTER);pad(screen,30,30,30,30);screen.setBackgroundColor(0xff080e16);setContentView(screen);android.widget.FrameLayout logo=createDoorLogo(82);android.widget.LinearLayout.LayoutParams logoParams=new android.widget.LinearLayout.LayoutParams(dp(82),dp(82));logoParams.gravity=Gravity.CENTER;logoParams.bottomMargin=dp(12);screen.addView(logo,logoParams);TextView name=txt("Жухлый Банк",26,0xfff4f7fa,true);name.setGravity(Gravity.CENTER);add(screen,name);TextView prompt=txt("Введите PIN-код",17,0xff96a7b8,false);prompt.setGravity(Gravity.CENTER);pad(prompt,0,30,0,20);add(screen,prompt);TextView dots=txt("○  ○  ○  ○",30,0xfff4f7fa,true);dots.setGravity(Gravity.CENTER);pad(dots,0,0,0,24);add(screen,dots);final StringBuilder entered=new StringBuilder();String[] keys={"1","2","3","4","5","6","7","8","9","","0","⌫"};for(int row=0;row<4;row++){LinearLayout line=new LinearLayout(this);line.setGravity(Gravity.CENTER);add(screen,line);for(int col=0;col<3;col++){String key=keys[row*3+col];TextView b=txt(key,25,0xfff4f7fa,true);b.setGravity(Gravity.CENTER);LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(70),1);lp.setMargins(dp(4),dp(4),dp(4),dp(4));line.addView(b,lp);if(!key.isEmpty()){b.setBackground(shape(0xff172333,18));b.setOnClickListener(v->{if(key.equals("⌫")){if(entered.length()>0)entered.deleteCharAt(entered.length()-1);}else if(entered.length()<4)entered.append(key);StringBuilder mask=new StringBuilder();for(int i=0;i<4;i++)mask.append(i<entered.length()?"●":"○").append(i==3?"":"  ");dots.setText(mask.toString());if(entered.length()==4){if(entered.toString().equals("1488")){screen.animate().alpha(0f).setDuration(220).withEndAction(()->show("Главная")).start();}else{entered.setLength(0);prompt.setText("Неверный PIN-код");prompt.setTextColor(RED);dots.animate().translationX(dp(12)).setDuration(70).withEndAction(()->dots.animate().translationX(0).setDuration(70).start()).start();new Handler(Looper.getMainLooper()).postDelayed(()->dots.setText("○  ○  ○  ○"),350);}}});}}}}
 
  void qrPayment(){heading("▦  QR-сканер");LinearLayout p=panel();line(p,"Сканирование QR","Камера или фотография из галереи");button("📷  Открыть камеру",()->requestQrCamera());button("▧  Выбрать изображение",()->{Intent i=new Intent(Intent.ACTION_GET_CONTENT);i.setType("image/*");startActivityForResult(i,4302);});button("Ввести данные вручную",()->service("Оплата по QR"));}
  @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){super.onActivityResult(requestCode,resultCode,data);  if(requestCode==7709&&resultCode==RESULT_OK&&data!=null&&data.getData()!=null){try{getContentResolver().takePersistableUriPermission(data.getData(),Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}getPreferences(0).edit().putString("promo_music_uri",data.getData().toString()).apply();launchPromo();return;}if(requestCode==7703&&resultCode==RESULT_OK&&data!=null&&data.getData()!=null&&getPreferences(0).getString("custom_card_uri_3","").isEmpty()){
