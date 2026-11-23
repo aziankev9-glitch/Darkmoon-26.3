@@ -233,19 +233,20 @@ public class MainActivity extends Activity {
  void cardTransfer(){cardTransferFrom(0);}
  void cardTransferFrom(int selected){
   heading("Перевод между своими картами");
-  int count=3+extraCards;
+  int count=1+Math.min(extraCards,1);
+  int[] cardIds=extraCards>0?new int[]{0,3}:new int[]{0};
   String[] names=new String[count];
-  for(int i=0;i<count;i++)names[i]=cardTitle(i)+" · "+rub(cardBalance(i));
+  for(int i=0;i<count;i++)names[i]=cardTitle(cardIds[i])+" · "+rub(cardBalance(cardIds[i]));
   Spinner from=new Spinner(this),to=new Spinner(this);
   ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,names);
   from.setAdapter(adapter);to.setAdapter(adapter);
-  from.setSelection(Math.max(0,Math.min(selected,count-1)));to.setSelection(selected==0?1:0);
+  from.setSelection(selected==3&&count>1?1:0);to.setSelection(selected==3?0:Math.min(1,count-1));
   add(body,txt("С какой карты",15,WHITE,true));add(body,from);
   add(body,txt("На какую карту",15,WHITE,true));add(body,to);
   EditText amount=field("Сумма перевода, ₽",8194);
   button("Перевести",()->{
    try{
-    int source=from.getSelectedItemPosition(),destination=to.getSelectedItemPosition();
+    int source=cardIds[from.getSelectedItemPosition()],destination=cardIds[to.getSelectedItemPosition()];
     double sum=Double.parseDouble(amount.getText().toString().replace(',','.'));
     if(!Double.isFinite(sum)||sum<=0||source==destination||source==2||destination==2||sum>cardBalance(source))throw new Exception();
     adjustCardBalance(source,-sum);adjustCardBalance(destination,sum);
@@ -607,12 +608,12 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
   scroller.setHorizontalScrollBarEnabled(false);
   LinearLayout track=new LinearLayout(this);track.setOrientation(0);pad(track,1,5,15,8);scroller.addView(track);
   int cardWidth=Math.min(dp(325),getResources().getDisplayMetrics().widthPixels-dp(75));
-  for(int i=0;i<3+Math.min(extraCards,1);i++){
-   final int id=i;
+  for(int i=0;i<1+Math.min(extraCards,1);i++){
+   final int id=i==0?0:3;
    LinearLayout tile=new LinearLayout(this);tile.setOrientation(1);
    LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(cardWidth,-2);lp.rightMargin=dp(12);track.addView(tile,lp);
    LinearLayout card=styledBankCard(id,cardTitle(id),cardThemeColor(id),true);
-   tile.addView(card,new LinearLayout.LayoutParams(-1,dp(205)));
+   card.setElevation(dp(8));tile.addView(card,new LinearLayout.LayoutParams(-1,dp(205)));
    card.setOnClickListener(v->cardPreview(id,cardTitle(id),cardBalance(id),cardThemeColor(id)));
   }
   if(extraCards==0){
@@ -625,7 +626,7 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
    empty.setOnClickListener(v->createCustomCard());
   }
   add(body,scroller);
-  TextView swipe=txt("← Листай карты вправо и влево →",12,MUTED,false);swipe.setGravity(Gravity.CENTER);add(body,swipe);
+  TextView swipe=txt(extraCards==0?"●  ○   Свайпни к плюсу →":"●  ○   Листай карты свайпом",12,MUTED,false);swipe.setGravity(Gravity.CENTER);add(body,swipe);
   TextView transfer=txt("⇄  Перевод между своими картами",14,WHITE,true);transfer.setGravity(Gravity.CENTER);pad(transfer,12,13,12,13);transfer.setBackground(shape(PANEL,15));add(body,transfer);
   transfer.setOnClickListener(v->cardTransferFrom(0));
  }
