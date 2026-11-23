@@ -583,7 +583,18 @@ public class MainActivity extends Activity {
 com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration.android.IntentIntegrator.parseActivityResult(requestCode,resultCode,data);if(r!=null){if(r.getContents()!=null)showQrResult(r.getContents());return;}if(requestCode==4302&&resultCode==RESULT_OK&&data!=null){try{android.graphics.BitmapFactory.Options o=new android.graphics.BitmapFactory.Options();o.inSampleSize=2;android.graphics.Bitmap bmp;try(java.io.InputStream in=getContentResolver().openInputStream(data.getData())){bmp=android.graphics.BitmapFactory.decodeStream(in,null,o);}if(bmp==null)throw new Exception();int w=bmp.getWidth(),h=bmp.getHeight();int[] pixels=new int[w*h];bmp.getPixels(pixels,0,w,0,0,w,h);bmp.recycle();com.google.zxing.RGBLuminanceSource source=new com.google.zxing.RGBLuminanceSource(w,h,pixels);com.google.zxing.BinaryBitmap binary=new com.google.zxing.BinaryBitmap(new com.google.zxing.common.HybridBinarizer(source));String result=new com.google.zxing.MultiFormatReader().decode(binary).getText();showQrResult(result);}catch(Exception e){new AlertDialog.Builder(this).setTitle("QR не распознан").setMessage("Попробуй другое фото с чётким QR-кодом.").setPositiveButton("OK",null).show();}}}
  void showQrResult(String data){String value=data.length()>1500?data.substring(0,1500):data;new AlertDialog.Builder(this).setTitle("QR-код считан").setMessage("Содержимое:\n\n"+value+"\n\nДеньги не списываются.").setNegativeButton("Закрыть",null).setPositiveButton("Продолжить",(d,w)->service("Оплата по QR")).show();}
 
- void sites(){heading("Сайты и развлечения");LinearLayout p=panel();line(p,"🐶  Собачий домик","Игровой автомат · виртуальные ставки");button("Играть",()->slot());}
+ void sites(){
+ heading("🎮 Сайты и развлечения");
+ LinearLayout minePanel=panel();minePanel.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff34204b,0xff111e30}));
+ line(minePanel,"⛏️  MINE RUSH · КИРКА RUSH","Пиксельная шахта · улучшаем кирку · бонусы до ×15000");
+ TextView open=txt("⛏  ИГРАТЬ В MINE RUSH",17,0xffffffff,true);open.setGravity(Gravity.CENTER);pad(open,10,17,10,17);open.setBackground(shape(0xffd52a48,15));add(minePanel,open);
+ open.setOnClickListener(v->MineRushGame.open(this,new MineRushGame.Wallet(){
+  public double balance(){return MainActivity.this.balance;}
+  public boolean charge(double amount){if(amount<=0||MainActivity.this.balance<amount)return false;MainActivity.this.balance-=amount;history.add(0,"⛏ Mine Rush · ставка −"+rub(amount));save();return true;}
+  public void credit(double amount){if(amount<=0)return;MainActivity.this.balance+=amount;history.add(0,"🏆 Mine Rush · выигрыш +"+rub(amount));save();}
+ }));
+ LinearLayout p=panel();line(p,"🐶  Собачий домик","Игровой автомат · виртуальные ставки");button("Играть",()->slot());
+}
 
  static class SlotSymbolView extends View {
   int symbol=0; android.graphics.Paint p=new android.graphics.Paint(3); android.graphics.Canvas c; float w,h;
