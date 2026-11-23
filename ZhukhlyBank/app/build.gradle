@@ -2,7 +2,7 @@ plugins { id 'com.android.application' }
 android {
  namespace 'ru.zhukhly.bank'
  compileSdk 35
- defaultConfig { applicationId 'ru.zhukhly.bank'; minSdk 26; targetSdk 35; versionCode 89; versionName '8.9' }
+ defaultConfig { applicationId 'ru.zhukhly.bank'; minSdk 26; targetSdk 35; versionCode 90; versionName '9.0' }
 }
 
 dependencies {
@@ -29,7 +29,7 @@ tasks.matching { it.name == 'preBuild' }.configureEach { dependsOn tasks.named('
 // Stage the video uploaded through GitHub's web UI into res/raw.
 tasks.register('stagePromoVideo') {
     doLast {
-        def sourceVideo = file('src/main/res/Zhukhly_Bank_GIF_Loop_30s_9x16-1.mp4')
+        def sourceVideo = file('src/main/res/Zhukhly_Bank_Fullscreen_Enhanced_30s.mp4')
         if (sourceVideo.exists()) {
             def targetDir = file('src/main/res/raw')
             targetDir.mkdirs()
