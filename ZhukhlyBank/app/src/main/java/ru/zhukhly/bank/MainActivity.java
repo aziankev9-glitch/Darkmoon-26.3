@@ -76,7 +76,10 @@ public class MainActivity extends Activity {
   runnerBox.addView(runnerImage,new android.widget.FrameLayout.LayoutParams(-1,-1));
   final int fw=sprite.getWidth()/3,fh=sprite.getHeight()/3;
   final android.graphics.Bitmap[] frames=new android.graphics.Bitmap[9];
-  for(int frame=0;frame<9;frame++)frames[frame]=android.graphics.Bitmap.createBitmap(sprite,(frame%3)*fw,(frame/3)*fh,fw,fh);
+  for(int frame=0;frame<9;frame++){
+   android.graphics.Bitmap original=android.graphics.Bitmap.createBitmap(sprite,(frame%3)*fw,(frame/3)*fh,fw,fh);
+   frames[frame]=transparentRunnerFrame(original);
+  }
   runnerImage.setImageBitmap(frames[0]);
   final android.animation.ValueAnimator running=android.animation.ValueAnimator.ofInt(0,8);
   running.setDuration(1125);running.setRepeatCount(android.animation.ValueAnimator.INFINITE);
@@ -180,6 +183,28 @@ public class MainActivity extends Activity {
  }catch(Exception e){new AlertDialog.Builder(this).setMessage("Не удалось начать загрузку: "+e.getMessage()).setPositiveButton("ОК",null).show();}
 }
 
+ // Remove the connected dark-red studio backdrop without erasing the red tracksuit.
+ android.graphics.Bitmap transparentRunnerFrame(android.graphics.Bitmap original){
+  int w=original.getWidth(),h=original.getHeight(),n=w*h;
+  int[] pixels=new int[n];original.getPixels(pixels,0,w,0,0,w,h);
+  boolean[] outside=new boolean[n];java.util.ArrayDeque<Integer> queue=new java.util.ArrayDeque<>();
+  for(int x=0;x<w;x++){queue.add(x);queue.add((h-1)*w+x);}
+  for(int y=0;y<h;y++){queue.add(y*w);queue.add(y*w+w-1);}
+  while(!queue.isEmpty()){
+   int i=queue.removeFirst();if(outside[i])continue;
+   int c=pixels[i],rr=(c>>16)&255,gg=(c>>8)&255,bb=c&255;
+   boolean background=(android.graphics.Color.alpha(c)<20)||(rr<155&&gg<105&&bb<115&&rr<gg*2.9f);
+   if(!background)continue;
+   outside[i]=true;int x=i%w,y=i/w;
+   if(x>0&&!outside[i-1])queue.add(i-1);
+   if(x<w-1&&!outside[i+1])queue.add(i+1);
+   if(y>0&&!outside[i-w])queue.add(i-w);
+   if(y<h-1&&!outside[i+w])queue.add(i+w);
+  }
+  for(int i=0;i<n;i++)if(outside[i])pixels[i]=android.graphics.Color.TRANSPARENT;
+  android.graphics.Bitmap out=android.graphics.Bitmap.createBitmap(w,h,android.graphics.Bitmap.Config.ARGB_8888);
+  out.setPixels(pixels,0,w,0,0,w,h);return out;
+ }
  void showDownloadedUpdateDialog(String filename,android.net.Uri apkUri){
   final Dialog dialog=new Dialog(this);
   LinearLayout panel=new LinearLayout(this);panel.setOrientation(1);panel.setGravity(Gravity.CENTER_HORIZONTAL);
