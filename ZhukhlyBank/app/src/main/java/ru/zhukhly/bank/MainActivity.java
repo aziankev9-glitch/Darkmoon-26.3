@@ -303,8 +303,8 @@ public class MainActivity extends Activity {
   TextView title=txt("✦  Оформление кредита",23,WHITE,true);panel.addView(title);
   TextView subtitle=txt("Кредитная карта Жухлый Банк",13,0xFFBCAAB6,false);panel.addView(subtitle);spaceIn(panel,16);
   TextView label=txt("Выбери сумму кредита",17,WHITE,true);panel.addView(label);
-  RadioGroup group=new RadioGroup(this);group.setOrientation(1);
-  for(int i=0;i<amounts.length;i++){final int idx=i;RadioButton option=new RadioButton(this);option.setText(rub(amounts[i]));option.setTextSize(17);option.setTextColor(WHITE);option.setButtonTintList(android.content.res.ColorStateList.valueOf(0xFFFF1744));option.setPadding(dp(10),dp(7),dp(8),dp(7));group.addView(option);option.setChecked(i==0);option.setOnClickListener(v->selected[0]=idx);}
+  android.widget.RadioGroup group=new android.widget.RadioGroup(this);group.setOrientation(1);
+  for(int i=0;i<amounts.length;i++){final int idx=i;android.widget.RadioButton option=new android.widget.RadioButton(this);option.setId(20001+i);option.setText(rub(amounts[i]));option.setTextSize(17);option.setTextColor(WHITE);option.setButtonTintList(android.content.res.ColorStateList.valueOf(0xFFFF1744));option.setPadding(dp(10),dp(7),dp(8),dp(7));group.addView(option);option.setChecked(i==0);option.setOnClickListener(v->selected[0]=idx);}
   panel.addView(group);spaceIn(panel,12);
   TextView terms=txt("◷  7 дней без процентов (0%)\\n\\n⚠  С 8-го дня: 5% от суммы кредита ежедневно. Плата списывается с основной карты в счёт задолженности. При нехватке средств остаток сохраняется.\\n\\nВсе операции виртуальные.",14,WHITE,false);terms.setPadding(dp(12),dp(12),dp(12),dp(12));terms.setBackground(shape(0xFF2B1525,15));panel.addView(terms);
   TextView summary=txt("К выдаче: "+rub(amounts[0])+"   •   Просрочка: "+rub(amounts[0]*0.05)+" / день",14,0xFFFF6688,true);panel.addView(summary);
