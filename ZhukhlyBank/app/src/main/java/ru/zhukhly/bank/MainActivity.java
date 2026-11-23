@@ -69,7 +69,7 @@ public class MainActivity extends Activity {
   target.setOnLongClickListener(v->{number.setText(demoCardNumber(id));new Handler(Looper.getMainLooper()).postDelayed(()->number.setText(hiddenCardNumber(id)),3500);return true;});
  }
  double cardBalance(int id){return id==0?balance:id==1?salaryBalance:id==2?creditAvailable:extraBalances[id-3];}
- void adjustCardBalance(int id,double delta){if(id==0)balance+=delta;else if(id==1)salaryBalance+=delta;else if(id==2){creditAvailable+=delta; if(delta<0)creditAvailable=Math.max(0,creditAvailable);}else if(id>=3)extraBalances[id-3]+=delta;}
+ void adjustCardBalance(int id,double delta){if(id==0)balance+=delta;else if(id==1)salaryBalance+=delta;else if(id==2){creditAvailable=Math.max(0,creditAvailable+delta);}else if(id>=3)extraBalances[id-3]+=delta;}
  android.graphics.drawable.Drawable cardBackground(int id,int color){
   GradientDrawable base=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff090b14,color,0xff250815,0xff080a14});
   base.setCornerRadius(dp(19));
@@ -629,7 +629,7 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
    LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(cardWidth,-2);lp.rightMargin=dp(12);track.addView(tile,lp);
    LinearLayout card=styledBankCard(id,cardTitle(id),cardThemeColor(id),true);
    card.setElevation(dp(8));tile.addView(card,new LinearLayout.LayoutParams(-1,dp(205)));
-   card.setOnClickListener(v->cardPreview(id,cardTitle(id),cardBalance(id),cardThemeColor(id)));
+   card.setOnClickListener(v->{if(id==2)show("Карты");else cardPreview(id,cardTitle(id),cardBalance(id),cardThemeColor(id));});
   }
   if(extraCards==0){
    LinearLayout empty=new LinearLayout(this);empty.setOrientation(1);empty.setGravity(Gravity.CENTER);
@@ -642,7 +642,7 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
   }
   add(body,scroller);
   TextView swipe=txt(extraCards==0?"●  ○  ○  ＋   Листай карты →":"●  ○  ○  ○   Листай карты свайпом",12,MUTED,false);swipe.setGravity(Gravity.CENTER);add(body,swipe);
-  TextView transfer=txt("⇄  Перевод между своими картами",14,WHITE,true);transfer.setGravity(Gravity.CENTER);pad(transfer,12,13,12,13);transfer.setBackground(shape(PANEL,15));add(body,transfer);
+  TextView transfer=txt("⇄  Перевод между картами · кредит: только списание",14,WHITE,true);transfer.setGravity(Gravity.CENTER);pad(transfer,12,13,12,13);transfer.setBackground(shape(PANEL,15));add(body,transfer);
   transfer.setOnClickListener(v->cardTransferFrom(0));
  }
  void openExtraCard(){createCustomCard();}
