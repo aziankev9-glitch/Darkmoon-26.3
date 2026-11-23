@@ -14,7 +14,7 @@ import java.util.*;
 public class MainActivity extends Activity {
  android.media.MediaPlayer promoPlayer;
  void stopPromoMusic(){if(promoPlayer!=null){try{promoPlayer.stop();}catch(Exception ignored){}promoPlayer.release();promoPlayer=null;}}
- void playPromoMusic(){stopPromoMusic();String uri=getPreferences(0).getString("promo_music_uri","");if(uri.isEmpty())return;try{promoPlayer=new android.media.MediaPlayer();promoPlayer.setDataSource(this,android.net.Uri.parse(uri));promoPlayer.setLooping(true);promoPlayer.prepare();promoPlayer.start();}catch(Exception e){stopPromoMusic();}}
+ void playPromoMusic(){stopPromoMusic();try{int bundled=getResources().getIdentifier("promo_music","raw",getPackageName());if(bundled!=0){promoPlayer=android.media.MediaPlayer.create(this,bundled);if(promoPlayer!=null){promoPlayer.setLooping(true);promoPlayer.start();return;}}String uri=getPreferences(0).getString("promo_music_uri","");if(uri.isEmpty())return;promoPlayer=new android.media.MediaPlayer();promoPlayer.setDataSource(this,android.net.Uri.parse(uri));promoPlayer.setLooping(true);promoPlayer.prepare();promoPlayer.start();}catch(Exception e){stopPromoMusic();}}
  @Override protected void onStop(){super.onStop();stopPromoMusic();}
  @Override protected void onDestroy(){stopPromoMusic();super.onDestroy();}
 
