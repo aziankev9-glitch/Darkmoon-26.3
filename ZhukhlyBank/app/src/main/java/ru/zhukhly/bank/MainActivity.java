@@ -294,7 +294,6 @@ public class MainActivity extends Activity {
    .setPositiveButton(creditDebt>0?"Погасить":"Оформить кредит",(d,w)->{if(creditDebt>0){show("Карты");repayCredit();}else chooseCredit();})
    .setNegativeButton("Закрыть",null).show();
  }
- void creditPanelDialog(){show("Карты");}
  void creditPanel(){
   heading("Кредитная карта");
   LinearLayout p=panel();line(p,"Баланс кредитной карты: "+rub(creditAvailable),"Задолженность: "+rub(creditDebt));
