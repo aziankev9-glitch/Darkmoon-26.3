@@ -36,5 +36,32 @@ jobs:
           else
             echo "Release v5.7 APK unavailable; cannot verify its signing certificate."
           fi
+      - name: Check current signing secret certificate
+        env:
+          SIGNING_KEY_B64: ${{ secrets.ZHUKHLY_SIGNING_KEY_B64 }}
+        run: |
+          if [ -z "$SIGNING_KEY_B64" ]; then
+            echo "Current signing secret is unavailable"
+          else
+            printf '%s' "$SIGNING_KEY_B64" | base64 -d > /tmp/current-signing.keystore
+            keytool -list -v -keystore /tmp/current-signing.keystore -storepass android -alias androiddebugkey | grep 'SHA256:' || true
+            rm -f /tmp/current-signing.keystore
+          fi
+      - name: Compare published release APK certificates
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for VERSION in 5.6 5.7 5.8 5.9 6.0; do
+            mkdir -p "/tmp/bank-$VERSION"
+            if gh release download "v$VERSION" -p '*.apk' -D "/tmp/bank-$VERSION" >/dev/null 2>&1; then
+              APK=$(find "/tmp/bank-$VERSION" -name '*.apk' -print -quit)
+              echo "Release v$VERSION certificate:"
+              if [ -n "$APK" ]; then
+                "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK" | grep 'SHA-256 digest' || true
+              fi
+            else
+              echo "Release v$VERSION APK unavailable"
+            fi
+          done
       - name: Diagnostic instructions
         run: echo "Compare the two SHA-256 certificate fingerprints. Never upload the private signing key as an artifact."
