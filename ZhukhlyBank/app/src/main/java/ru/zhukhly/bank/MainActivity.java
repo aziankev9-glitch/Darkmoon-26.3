@@ -563,8 +563,12 @@ public class MainActivity extends Activity {
  void showPromoFallback(android.widget.FrameLayout frame){android.widget.ImageView fallback=new android.widget.ImageView(this);fallback.setImageResource(R.drawable.promo_banner);fallback.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);frame.addView(fallback,0,new android.widget.FrameLayout.LayoutParams(-1,-1));}
  void cropPromoVideo(android.view.TextureView texture,int videoW,int videoH){
    int w=texture.getWidth(),h=texture.getHeight();if(w<=0||h<=0||videoW<=0||videoH<=0)return;
-   float scale=Math.max((float)w/videoW,(float)h/videoH);
-   float sx=videoW*scale/w,sy=videoH*scale/h;
+   // The original ad contains dark bands baked into its top and bottom ~12%.
+   // Zoom past those bands, then center-crop for any device aspect ratio.
+   float aspectVideo=(float)videoW/videoH,aspectView=(float)w/h;
+   float sx=1f,sy=1f;
+   if(aspectVideo>aspectView){sx=aspectVideo/aspectView;}else{sy=aspectView/aspectVideo;}
+   sx*=1.34f;sy*=1.34f;
    android.graphics.Matrix matrix=new android.graphics.Matrix();matrix.setScale(sx,sy,w/2f,h/2f);texture.setTransform(matrix);
  }
 
