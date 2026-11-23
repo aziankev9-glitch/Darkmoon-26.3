@@ -130,7 +130,7 @@ public class MainActivity extends Activity {
   glow.setDuration(750);glow.setRepeatCount(android.animation.ValueAnimator.INFINITE);
   glow.addUpdateListener(animation->{
    float v=(Float)animation.getAnimatedValue();
-   face.setElevation(dp(6+v*17));
+   face.setElevation(dp(6)+(v*dp(17)));
    face.setAlpha(.92f+v*.08f);
   });
   outer.setOnTouchListener((v,event)->{
