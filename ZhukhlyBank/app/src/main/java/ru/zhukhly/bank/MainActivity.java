@@ -63,12 +63,16 @@ public class MainActivity extends Activity {
  void zhukhlyPay(){
  heading("ЖУХЛЫЙ  PAY");
  LinearLayout hero=new LinearLayout(this);hero.setOrientation(1);hero.setGravity(Gravity.CENTER);pad(hero,18,20,18,22);hero.setBackground(shape(0xfff8f9fb,25));add(body,hero);
- TextView brand=txt("Ж  PAY",30,0xff14171d,true);brand.setGravity(Gravity.CENTER);add(hero,brand);
- TextView character=txt("🐻",94,0xfff02b42,true);character.setGravity(Gravity.CENTER);pad(character,0,18,0,5);add(hero,character);
- character.setScaleX(.84f);character.setScaleY(.84f);character.animate().scaleX(1f).scaleY(1f).rotation(6f).setDuration(800).setInterpolator(new android.view.animation.OvershootInterpolator()).start();
+ TextView brand=txt("Жухлый Pay",28,0xff14171d,true);brand.setGravity(Gravity.CENTER);add(hero,brand);
+ TextView logo=txt("Ж",55,WHITE,true);logo.setGravity(Gravity.CENTER);logo.setBackground(shape(0xffc60928,22));
+ LinearLayout.LayoutParams logoParams=new LinearLayout.LayoutParams(dp(96),dp(96));logoParams.gravity=Gravity.CENTER;logoParams.topMargin=dp(16);hero.addView(logo,logoParams);
+ android.animation.ObjectAnimator spin=android.animation.ObjectAnimator.ofFloat(logo,"rotationY",0f,360f);spin.setDuration(2300);spin.setRepeatCount(android.animation.ValueAnimator.INFINITE);spin.setInterpolator(new android.view.animation.LinearInterpolator());spin.start();
+ TextView character=txt("🏃🏻‍♂️",86,0xfff02b42,true);character.setGravity(Gravity.CENTER);pad(character,0,12,0,5);add(hero,character);
+ android.animation.ObjectAnimator run=android.animation.ObjectAnimator.ofFloat(character,"translationX",-dp(48),dp(48));run.setDuration(850);run.setRepeatCount(android.animation.ValueAnimator.INFINITE);run.setRepeatMode(android.animation.ValueAnimator.REVERSE);run.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());run.start();
+ TextView logoCaption=txt("Ж PAY",23,0xffc60928,true);logoCaption.setGravity(Gravity.CENTER);add(hero,logoCaption);
  TextView prompt=txt("Поднеси телефон к терминалу",21,0xff14171d,true);prompt.setGravity(Gravity.CENTER);add(hero,prompt);
  TextView demo=txt("ДЕМО-РЕЖИМ · настоящий NFC не используется",12,0xff69717d,false);demo.setGravity(Gravity.CENTER);pad(demo,0,9,0,19);add(hero,demo);
- TextView card=txt("Ж  ЖУХЛЫЙ БАНК\\n\\nМИР  •••• 2026",21,WHITE,true);pad(card,22,24,22,24);card.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xfff02b42,0xff9e1231}));add(hero,card);
+ TextView card=txt("Ж  ЖУХЛЫЙ БАНК\nМИР  •••• 2026",21,WHITE,true);pad(card,22,24,22,24);card.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xfff02b42,0xff9e1231}));add(hero,card);
  TextView balanceToggle=txt("◉  Показать виртуальный баланс",14,0xff1c232c,true);balanceToggle.setGravity(Gravity.CENTER);pad(balanceToggle,0,20,0,8);add(hero,balanceToggle);
  balanceToggle.setOnClickListener(v->balanceToggle.setText("Баланс: "+rub(balance)));
  TextView hint=txt("Выбери сумму ниже для имитации оплаты",13,MUTED,false);pad(hint,0,17,0,8);add(body,hint);
