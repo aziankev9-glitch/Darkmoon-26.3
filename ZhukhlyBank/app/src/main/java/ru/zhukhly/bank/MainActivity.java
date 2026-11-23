@@ -69,7 +69,7 @@ public class MainActivity extends Activity {
   target.setOnLongClickListener(v->{number.setText(demoCardNumber(id));new Handler(Looper.getMainLooper()).postDelayed(()->number.setText(hiddenCardNumber(id)),3500);return true;});
  }
  double cardBalance(int id){return id==0?balance:id==1?salaryBalance:id==2?creditAvailable:extraBalances[id-3];}
- void adjustCardBalance(int id,double delta){if(id==0)balance+=delta;else if(id==1)salaryBalance+=delta;else if(id==2)creditAvailable+=delta;else if(id>=3)extraBalances[id-3]+=delta;}
+ void adjustCardBalance(int id,double delta){if(id==0)balance+=delta;else if(id==1)salaryBalance+=delta;else if(id==2){creditAvailable+=delta; if(delta<0)creditAvailable=Math.max(0,creditAvailable);}else if(id>=3)extraBalances[id-3]+=delta;}
  android.graphics.drawable.Drawable cardBackground(int id,int color){
   GradientDrawable base=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff090b14,color,0xff250815,0xff080a14});
   base.setCornerRadius(dp(19));
@@ -89,6 +89,8 @@ public class MainActivity extends Activity {
   return new android.graphics.drawable.LayerDrawable(new android.graphics.drawable.Drawable[]{background,border});
  }
  void pickCardBackground(int id){
+  if(id!=3){Toast.makeText(this,"Свой фон доступен только новой карте",Toast.LENGTH_LONG).show();return;}
+  if(getPreferences(0).getBoolean("custom_card_background_locked_"+id,false)){Toast.makeText(this,"Фон этой карты уже выбран",Toast.LENGTH_LONG).show();return;}
   Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
   intent.setType("image/*");intent.addCategory(Intent.CATEGORY_OPENABLE);
   startActivityForResult(intent,7700+id);
@@ -248,7 +250,7 @@ public class MainActivity extends Activity {
    try{
     int source=cardIds[from.getSelectedItemPosition()],destination=cardIds[to.getSelectedItemPosition()];
     double sum=Double.parseDouble(amount.getText().toString().replace(',','.'));
-    if(!Double.isFinite(sum)||sum<=0||source==destination||sum>cardBalance(source))throw new Exception();
+    if(!Double.isFinite(sum)||sum<=0||source==destination||sum>cardBalance(source)||destination==2)throw new Exception();
     adjustCardBalance(source,-sum);adjustCardBalance(destination,sum);
     history.add(0,"Между картами: "+cardTitle(source)+" → "+cardTitle(destination)+" · "+rub(sum));
     save();show("Карты");
@@ -268,7 +270,7 @@ public class MainActivity extends Activity {
    .setItems(options,(d,which)->{if(creditDebt>0){Toast.makeText(this,"Сначала погаси текущий кредит",Toast.LENGTH_SHORT).show();return;}creditPrincipal=values[which];creditDebt=values[which];creditAvailable=values[which];creditDue=System.currentTimeMillis()+7L*86400000L;lastPenaltyDay=0;history.add(0,"Демо-кредит +"+rub(values[which]));save();show("Карты");})
    .setNegativeButton("Отмена",null).show();
  }
- void repayCredit(){heading("Погашение кредита");EditText amount=field("Сумма погашения, ₽",8194);button("Погасить",()->{try{double sum=Double.parseDouble(amount.getText().toString().replace(',','.'));if(!Double.isFinite(sum)||sum<=0||sum>balance)throw new Exception();double paid=Math.min(sum,creditDebt);balance-=paid;creditDebt=Math.max(0,Math.round((creditDebt-paid)*100)/100.0);if(creditDebt==0){creditAvailable=0;creditDue=0;lastPenaltyDay=0;creditPrincipal=0;}history.add(0,"Погашение кредита · "+rub(paid));save();show("Карты");}catch(Exception e){Toast.makeText(this,"Недостаточно средств или неверная сумма",Toast.LENGTH_SHORT).show();}});}
+ void repayCredit(){heading("Погашение кредита");EditText amount=field("Сумма погашения, ₽",8194);button("Погасить",()->{try{double sum=Double.parseDouble(amount.getText().toString().replace(',','.'));if(!Double.isFinite(sum)||sum<=0||sum>balance)throw new Exception();double paid=Math.min(sum,creditDebt);balance-=paid;creditDebt=Math.max(0,Math.round((creditDebt-paid)*100)/100.0);creditAvailable+=paid;if(creditDebt==0){creditAvailable=0;creditDue=0;lastPenaltyDay=0;creditPrincipal=0;}history.add(0,"Погашение кредита · "+rub(paid));save();show("Карты");}catch(Exception e){Toast.makeText(this,"Недостаточно средств или неверная сумма",Toast.LENGTH_SHORT).show();}});}
  void settleAccounts(){long today=System.currentTimeMillis()/86400000L;if(lastSavingsDay==0)lastSavingsDay=today;if(today>lastSavingsDay&&savings>0){long days=Math.min(365,today-lastSavingsDay);double earned=Math.round(savings*(Math.pow(1+0.05/365,days)-1)*100)/100.0;savings+=earned;if(earned>0)history.add(0,"Проценты по накоплениям +"+rub(earned));}lastSavingsDay=today;java.util.Calendar cal=java.util.Calendar.getInstance();if(cal.get(java.util.Calendar.HOUR_OF_DAY)>=5){}else cal.add(java.util.Calendar.DAY_OF_MONTH,-1);long day=cal.get(java.util.Calendar.YEAR)*1000L+cal.get(java.util.Calendar.DAY_OF_YEAR);if(day>lastSalaryDay){if(lastSalaryDay!=-1||java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)>=5){salaryBalance+=5000;history.add(0,"Зарплата +5 000 ₽");}lastSalaryDay=day;}if(creditDebt>0&&creditDue>0&&System.currentTimeMillis()>creditDue&&lastPenaltyDay==0){creditDebt=Math.round((creditDebt+creditPrincipal*0.10)*100)/100.0;lastPenaltyDay=1;history.add(0,"Просрочка демо-кредита · 10% от суммы");}save();}
  void transactions(){heading("История");if(history.isEmpty()){LinearLayout p=panel();line(p,"Операций пока нет","Попробуй перевод по СБП");}for(String h:history){LinearLayout p=panel();line(p,h,"Нажми для подробностей и квитанции ›");p.setOnClickListener(v->receipt(h));}}
  EditText field(String hint,int type){EditText e=new EditText(this);e.setHint(hint);e.setHintTextColor(MUTED);e.setTextColor(WHITE);e.setSingleLine(true);e.setInputType(type);pad(e,12,14,12,14);e.setBackground(shape(PANEL,12));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(58));lp.bottomMargin=dp(12);body.addView(e,lp);return e;}
@@ -425,7 +427,7 @@ public class MainActivity extends Activity {
  void qrPayment(){heading("▦  QR-сканер");LinearLayout p=panel();line(p,"Сканирование QR","Камера или фотография из галереи");button("📷  Открыть камеру",()->requestQrCamera());button("▧  Выбрать изображение",()->{Intent i=new Intent(Intent.ACTION_GET_CONTENT);i.setType("image/*");startActivityForResult(i,4302);});button("Ввести данные вручную",()->service("Оплата по QR"));}
  @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){super.onActivityResult(requestCode,resultCode,data);  if(requestCode==7703&&resultCode==RESULT_OK&&data!=null&&data.getData()!=null&&getPreferences(0).getString("custom_card_uri_3","").isEmpty()){
    try{getContentResolver().takePersistableUriPermission(data.getData(),Intent.FLAG_GRANT_READ_URI_PERMISSION);}catch(Exception ignored){}
-   getPreferences(0).edit().putString("custom_card_uri_"+(requestCode-7700),data.getData().toString()).apply();
+   getPreferences(0).edit().putString("custom_card_uri_"+(requestCode-7700),data.getData().toString()).putBoolean("custom_card_background_locked_"+(requestCode-7700),true).apply();
    show("Карты");
   }
 com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration.android.IntentIntegrator.parseActivityResult(requestCode,resultCode,data);if(r!=null){if(r.getContents()!=null)showQrResult(r.getContents());return;}if(requestCode==4302&&resultCode==RESULT_OK&&data!=null){try{android.graphics.BitmapFactory.Options o=new android.graphics.BitmapFactory.Options();o.inSampleSize=2;android.graphics.Bitmap bmp;try(java.io.InputStream in=getContentResolver().openInputStream(data.getData())){bmp=android.graphics.BitmapFactory.decodeStream(in,null,o);}if(bmp==null)throw new Exception();int w=bmp.getWidth(),h=bmp.getHeight();int[] pixels=new int[w*h];bmp.getPixels(pixels,0,w,0,0,w,h);bmp.recycle();com.google.zxing.RGBLuminanceSource source=new com.google.zxing.RGBLuminanceSource(w,h,pixels);com.google.zxing.BinaryBitmap binary=new com.google.zxing.BinaryBitmap(new com.google.zxing.common.HybridBinarizer(source));String result=new com.google.zxing.MultiFormatReader().decode(binary).getText();showQrResult(result);}catch(Exception e){new AlertDialog.Builder(this).setTitle("QR не распознан").setMessage("Попробуй другое фото с чётким QR-кодом.").setPositiveButton("OK",null).show();}}}
