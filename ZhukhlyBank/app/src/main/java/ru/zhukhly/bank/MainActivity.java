@@ -195,7 +195,8 @@ public class MainActivity extends Activity {
   LinearLayout.LayoutParams tp=new LinearLayout.LayoutParams(-1,-2);tp.topMargin=dp(9);wrap.addView(transfer,tp);
   transfer.setOnClickListener(v->{dialog.dismiss();cardTransferFrom(id);});
   TextView close=txt("Закрыть",13,MUTED,false);close.setGravity(Gravity.CENTER);pad(close,12,11,12,8);add(wrap,close);close.setOnClickListener(v->dialog.dismiss());
-  dialog.setOnDismissListener(d->{if(id==1&&salaryTicker!=null)salaryHandler.removeCallbacks(salaryTicker);});\n  dialog.setContentView(wrap);dialog.show();Window w=dialog.getWindow();if(w!=null){w.setBackgroundDrawableResource(android.R.color.transparent);w.setLayout(getResources().getDisplayMetrics().widthPixels-dp(26),-2);}
+  dialog.setOnDismissListener(d->{if(id==1&&salaryTicker!=null)salaryHandler.removeCallbacks(salaryTicker);});
+  dialog.setContentView(wrap);dialog.show();Window w=dialog.getWindow();if(w!=null){w.setBackgroundDrawableResource(android.R.color.transparent);w.setLayout(getResources().getDisplayMetrics().widthPixels-dp(26),-2);}
  }
  void createCustomCard(){
   if(extraCards>=1){Toast.makeText(this,"Можно создать только одну дополнительную карту",Toast.LENGTH_SHORT).show();return;}
