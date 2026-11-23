@@ -74,30 +74,52 @@ public class MainActivity extends Activity {
    }return true;
   });
  }
+ int cardThemeColor(int id){
+  if(id>=3)return getPreferences(0).getInt("custom_card_color_"+id,0xff9a204b);
+  return new int[]{0xffbc143f,0xff225a98,0xff7d39a4}[Math.max(0,id)];
+ }
+ String cardTitle(int id){return id==0?"Основная карта":id==1?"Зарплатная карта":id==2?"Кредитная карта":"Моя карта "+(id-2);}
  LinearLayout styledBankCard(int id,String label,int color,boolean reveal){
-  LinearLayout card=new LinearLayout(this);card.setOrientation(1);pad(card,20,18,20,17);
+  LinearLayout card=new LinearLayout(this);card.setOrientation(1);pad(card,18,14,18,13);
   card.setBackground(luxuryCardBackground(color));
   LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);add(card,top);
-  TextView brand=txt("Ж  Жухлый Банк",18,WHITE,true);top.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
-  add(top,txt("◉  МИР",17,WHITE,true));
-  TextView art=txt("✦     Ж",48,0x66ff477a,true);art.setGravity(Gravity.RIGHT);pad(art,0,6,0,0);add(card,art);
-  TextView chip=txt("▦   )))",24,0xffffd48a,true);pad(chip,0,0,0,10);add(card,chip);
-  TextView number=txt(reveal?demoCardNumber(id):hiddenCardNumber(id),21,WHITE,true);number.setLetterSpacing(.065f);add(card,number);
-  LinearLayout bottom=new LinearLayout(this);bottom.setGravity(Gravity.CENTER_VERTICAL);pad(bottom,0,12,0,0);add(card,bottom);
-  TextView caption=txt(label+"  ·  ДЕМО",11,0xffe9b6c4,false);bottom.addView(caption,new LinearLayout.LayoutParams(0,-2,1));
+  TextView brand=txt("Ж  Жухлый Банк",16,WHITE,true);top.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
+  add(top,txt("МИР",15,WHITE,true));
+  LinearLayout center=new LinearLayout(this);center.setGravity(Gravity.CENTER_VERTICAL);pad(center,0,12,0,9);add(card,center);
+  TextView chip=txt("▦  )))",23,0xffffd58a,true);center.addView(chip,new LinearLayout.LayoutParams(0,-2,1));
+  TextView emblem=txt("Ж",37,0x88ff91ad,true);emblem.setGravity(Gravity.RIGHT);center.addView(emblem,new LinearLayout.LayoutParams(0,-2,1));
+  TextView number=txt(reveal?demoCardNumber(id):hiddenCardNumber(id),18,WHITE,true);number.setLetterSpacing(.025f);add(card,number);
+  LinearLayout bottom=new LinearLayout(this);bottom.setGravity(Gravity.CENTER_VERTICAL);pad(bottom,0,11,0,0);add(card,bottom);
+  TextView caption=txt(label+"  ·  ДЕМО",11,0xffefb9ca,false);bottom.addView(caption,new LinearLayout.LayoutParams(0,-2,1));
   add(bottom,txt("08/30",12,WHITE,true));
   if(!reveal)bindHoldReveal(card,number,id);
   return card;
  }
  void cardPreview(int id,String label,double amount,int color){
   Dialog dialog=new Dialog(this);
-  LinearLayout wrap=new LinearLayout(this);wrap.setOrientation(1);pad(wrap,16,20,16,20);wrap.setBackground(shape(PANEL,24));
-  TextView heading=txt("Моя карта",22,WHITE,true);pad(heading,0,0,0,15);add(wrap,heading);
-  LinearLayout card=styledBankCard(id,label,color,false);add(wrap,card);
-  TextView hint=txt("Удерживай карту, чтобы показать номер",13,MUTED,false);hint.setGravity(Gravity.CENTER);pad(hint,0,16,0,0);add(wrap,hint);
-  TextView close=txt("ГОТОВО",15,WHITE,true);close.setGravity(Gravity.CENTER);pad(close,12,14,12,14);close.setBackground(shape(RED,15));
+  LinearLayout wrap=new LinearLayout(this);wrap.setOrientation(1);pad(wrap,16,18,16,20);wrap.setBackground(shape(PANEL,24));
+  TextView heading=txt("Моя карта",21,WHITE,true);pad(heading,0,0,0,14);add(wrap,heading);
+  LinearLayout card=styledBankCard(id,label,color,false);
+  wrap.addView(card,new LinearLayout.LayoutParams(-1,dp(205)));
+  TextView hint=txt("Зажми карту — покажем номер",12,MUTED,false);hint.setGravity(Gravity.CENTER);pad(hint,0,14,0,0);add(wrap,hint);
+  TextView close=txt("Закрыть",15,WHITE,true);close.setGravity(Gravity.CENTER);pad(close,12,12,12,12);close.setBackground(shape(RED,14));
   LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.topMargin=dp(17);wrap.addView(close,cp);close.setOnClickListener(v->dialog.dismiss());
   dialog.setContentView(wrap);dialog.show();Window w=dialog.getWindow();if(w!=null){w.setBackgroundDrawableResource(android.R.color.transparent);w.setLayout(getResources().getDisplayMetrics().widthPixels-dp(28),-2);}
+ }
+ void createCustomCard(){
+  if(extraCards>=5){Toast.makeText(this,"Максимум 5 своих карт",Toast.LENGTH_SHORT).show();return;}
+  String[] styles={"❤️ Рубиновый неон","💙 Сапфировый","💜 Аметистовый","🖤 Чёрный графит","💚 Изумрудный","✨ Золотой"};
+  int[] colors={0xffbb1847,0xff1765a6,0xff8244b8,0xff303746,0xff087d69,0xffbc923b};
+  final int[] selected={0};
+  new AlertDialog.Builder(this).setTitle("Создать свою карту")
+   .setSingleChoiceItems(styles,0,(d,which)->selected[0]=which)
+   .setNegativeButton("Отмена",null)
+   .setPositiveButton("Создать",(d,which)->{
+    int id=3+extraCards;
+    getPreferences(0).edit().putInt("custom_card_color_"+id,colors[selected[0]]).apply();
+    extraBalances[extraCards]=0;extraCards++;save();show("Карты");
+    Toast.makeText(this,"Карта создана! Фон из галереи добавим следующим обновлением",Toast.LENGTH_LONG).show();
+   }).show();
  }
  void zhukhlyPay(){
  heading("ЖУХЛЫЙ  PAY");
@@ -184,17 +206,34 @@ public class MainActivity extends Activity {
  }
  void cards(){
   settleAccounts();heading("Мои карты");
-  String[] names={"Основная карта","Зарплатная карта","Кредитная карта"};
-  double[] values={balance,salaryBalance,creditDebt};
-  int[] colors={0xffad1439,0xff18578c,0xff7143a3};
-  for(int i=0;i<3;i++){
-   final int id=i;LinearLayout card=styledBankCard(i,names[i],colors[i],false);
-   LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.bottomMargin=dp(15);body.addView(card,cp);
-   TextView amount=txt(i==2?"Долг: "+rub(values[i]):"Доступно: "+rub(values[i]),14,MUTED,false);
-   pad(amount,4,0,0,16);add(body,amount);
+  TextView subtitle=txt("Листай карты влево и вправо",13,MUTED,false);pad(subtitle,2,0,0,14);add(body,subtitle);
+  android.widget.HorizontalScrollView scroller=new android.widget.HorizontalScrollView(this);
+  scroller.setHorizontalScrollBarEnabled(false);scroller.setClipToPadding(false);
+  LinearLayout track=new LinearLayout(this);track.setOrientation(0);pad(track,2,4,18,6);scroller.addView(track);
+  int screen=getResources().getDisplayMetrics().widthPixels;
+  int cardWidth=Math.min(dp(320),screen-dp(72));
+  for(int i=0;i<3+extraCards;i++){
+   final int id=i;int color=cardThemeColor(i);
+   LinearLayout tile=new LinearLayout(this);tile.setOrientation(1);
+   LinearLayout.LayoutParams tileLp=new LinearLayout.LayoutParams(cardWidth,-2);tileLp.rightMargin=dp(13);track.addView(tile,tileLp);
+   LinearLayout card=styledBankCard(id,cardTitle(id),color,false);
+   tile.addView(card,new LinearLayout.LayoutParams(-1,dp(198)));
+   TextView caption=txt(cardTitle(id)+"  •  Нажми для просмотра",12,MUTED,false);
+   pad(caption,6,11,0,0);add(tile,caption);
+   // Short tap opens details; long press still reveals the number.
+   card.setOnClickListener(v->cardPreview(id,cardTitle(id),id==0?balance:id==1?salaryBalance:id==2?creditDebt:extraBalances[id-3],color));
   }
-  for(int i=0;i<extraCards;i++){final int ix=i;LinearLayout extra=panel();line(extra,"Дополнительная карта "+(i+1),"Баланс: "+rub(extraBalances[i]));extra.setOnClickListener(v->extraTransfer(ix));}
-  button("＋  Открыть новую карту",()->openExtraCard());
+  LinearLayout addTile=new LinearLayout(this);addTile.setOrientation(1);addTile.setGravity(Gravity.CENTER);
+  addTile.setBackground(shape(PANEL,22));
+  LinearLayout.LayoutParams addLp=new LinearLayout.LayoutParams(cardWidth,dp(198));track.addView(addTile,addLp);
+  TextView plus=txt("＋",49,RED,true);plus.setGravity(Gravity.CENTER);add(addTile,plus);
+  TextView title=txt("Создать свою карту",18,WHITE,true);title.setGravity(Gravity.CENTER);add(addTile,title);
+  TextView desc=txt("Выбери собственный дизайн",12,MUTED,false);desc.setGravity(Gravity.CENTER);pad(desc,0,9,0,0);add(addTile,desc);
+  addTile.setOnClickListener(v->createCustomCard());
+  add(body,scroller);
+  TextView dots=txt("●  •  •  •     →",17,RED,true);dots.setGravity(Gravity.CENTER);pad(dots,0,10,0,14);add(body,dots);
+  TextView hint=txt("Зажми карту, чтобы увидеть её номер. Нажми для просмотра.",12,MUTED,false);hint.setGravity(Gravity.CENTER);pad(hint,8,0,8,16);add(body,hint);
+  button("＋  Создать карту со своим дизайном",()->createCustomCard());
   button("⇄  Перевод между картами",()->cardTransfer());
   button("Получить кредит 75 000 ₽",()->{settleAccounts();if(creditDebt>0){Toast.makeText(this,"Сначала погаси текущий кредит",Toast.LENGTH_LONG).show();return;}creditDebt=75000;balance+=75000;creditDue=System.currentTimeMillis()+7L*86400000;lastPenaltyDay=0;history.add(0,"Кредит +75 000 ₽ · срок 7 дней");save();show("Карты");});
   if(creditDebt>0){LinearLayout info=panel();line(info,"Кредит к погашению",rub(creditDebt)+" · срок до "+new java.text.SimpleDateFormat("dd.MM.yyyy",Locale.getDefault()).format(new Date(creditDue)));button("Погасить кредит",()->repayCredit());}
