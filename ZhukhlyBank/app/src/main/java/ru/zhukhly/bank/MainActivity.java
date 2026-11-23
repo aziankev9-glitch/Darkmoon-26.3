@@ -630,11 +630,37 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
  }catch(Exception e){Toast.makeText(this,"Проверь ставку и баланс",Toast.LENGTH_SHORT).show();}});
  }
 
- void homeCards(){heading("Ваши счета");String[] names={"Основной счёт","Зарплатный счёт","Кредитный счёт"};double[] amounts={balance,salaryBalance,75000-creditDebt};int[] colors={cardStyle==1?0xffc39a32:cardStyle==2?0xff128c8b:cardStyle==3?0xff6841a9:0xffb3213d,0xff2265a2,0xff6a418c};
- for(int i=0;i<3+extraCards;i++){final int id=i;LinearLayout card=new LinearLayout(this);card.setOrientation(0);card.setGravity(Gravity.CENTER_VERTICAL);pad(card,17,14,16,14);card.setBackground(shape(PANEL,20));LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,-2);cp.bottomMargin=dp(9);body.addView(card,cp);
- LinearLayout details=new LinearLayout(this);details.setOrientation(1);card.addView(details,new LinearLayout.LayoutParams(0,-2,1));add(details,txt(i<3?names[i]:"Дополнительный счёт "+(i-2),13,MUTED,false));TextView amount=txt(rub(i<3?amounts[i]:extraBalances[i]),22,WHITE,true);pad(amount,0,7,0,0);add(details,amount);
- TextView mini=txt("Ж",22,0xffffffff,true);mini.setGravity(Gravity.CENTER);GradientDrawable mb=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{i<3?colors[i]:0xff32766a,0xff441b38});mb.setCornerRadius(dp(12));mini.setBackground(mb);card.addView(mini,new LinearLayout.LayoutParams(dp(68),dp(49)));card.setOnClickListener(v->cardPreview(id,id==0?cardLabel:id<3?names[id]:"Дополнительная карта",id<3?amounts[id]:extraBalances[id],id<3?colors[id]:0xff32766a));}
- TextView plus=txt("＋  Открыть дополнительный счёт",13,RED,true);plus.setGravity(Gravity.CENTER);pad(plus,8,12,8,12);plus.setBackground(shape(PANEL,16));add(body,plus);plus.setOnClickListener(v->openExtraCard());space(12);
+ void homeCards(){
+  heading("Мои карты");
+  renderCardCarousel();
+  space(12);
+ }
+ void renderCardCarousel(){
+  android.widget.HorizontalScrollView scroller=new android.widget.HorizontalScrollView(this);
+  scroller.setHorizontalScrollBarEnabled(false);
+  LinearLayout track=new LinearLayout(this);track.setOrientation(0);pad(track,1,5,15,8);scroller.addView(track);
+  int cardWidth=Math.min(dp(325),getResources().getDisplayMetrics().widthPixels-dp(75));
+  for(int i=0;i<3+Math.min(extraCards,1);i++){
+   final int id=i;
+   LinearLayout tile=new LinearLayout(this);tile.setOrientation(1);
+   LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(cardWidth,-2);lp.rightMargin=dp(12);track.addView(tile,lp);
+   LinearLayout card=styledBankCard(id,cardTitle(id),cardThemeColor(id),true);
+   tile.addView(card,new LinearLayout.LayoutParams(-1,dp(205)));
+   card.setOnClickListener(v->cardPreview(id,cardTitle(id),cardBalance(id),cardThemeColor(id)));
+  }
+  if(extraCards==0){
+   LinearLayout empty=new LinearLayout(this);empty.setOrientation(1);empty.setGravity(Gravity.CENTER);
+   GradientDrawable border=shape(PANEL,20);border.setStroke(dp(2),RED,dp(7),dp(5));empty.setBackground(border);
+   LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(cardWidth,dp(205));track.addView(empty,lp);
+   TextView plus=txt("＋",44,RED,true);plus.setGravity(Gravity.CENTER);add(empty,plus);
+   TextView label=txt("Создать свою карту",16,WHITE,true);label.setGravity(Gravity.CENTER);add(empty,label);
+   TextView hint=txt("Один раз выбери свой фон",12,MUTED,false);hint.setGravity(Gravity.CENTER);add(empty,hint);
+   empty.setOnClickListener(v->createCustomCard());
+  }
+  add(body,scroller);
+  TextView swipe=txt("← Листай карты вправо и влево →",12,MUTED,false);swipe.setGravity(Gravity.CENTER);add(body,swipe);
+  TextView transfer=txt("⇄  Перевод между своими картами",14,WHITE,true);transfer.setGravity(Gravity.CENTER);pad(transfer,12,13,12,13);transfer.setBackground(shape(PANEL,15));add(body,transfer);
+  transfer.setOnClickListener(v->cardTransferFrom(0));
  }
  void openExtraCard(){createCustomCard();}
  void extraTransfer(int id){heading("Пополнение новой карты "+(id+1));EditText amount=field("Сумма перевода, ₽",8194);button("Перевести с основной",()->{try{double n=Double.parseDouble(amount.getText().toString().replace(',','.'));if(!Double.isFinite(n)||n<=0||n>balance)throw new Exception();balance-=n;extraBalances[id]+=n;history.add(0,"На дополнительную карту: "+rub(n));save();show("Карты");}catch(Exception e){Toast.makeText(this,"Проверь сумму",Toast.LENGTH_SHORT).show();}});button("Перевести на основную",()->{try{double n=Double.parseDouble(amount.getText().toString().replace(',','.'));if(!Double.isFinite(n)||n<=0||n>extraBalances[id])throw new Exception();extraBalances[id]-=n;balance+=n;history.add(0,"С дополнительной карты: "+rub(n));save();show("Карты");}catch(Exception e){Toast.makeText(this,"Проверь сумму",Toast.LENGTH_SHORT).show();}});}
