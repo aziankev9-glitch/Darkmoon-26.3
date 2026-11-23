@@ -29,7 +29,7 @@ tasks.matching { it.name == 'preBuild' }.configureEach { dependsOn tasks.named('
 // Stage the video uploaded through GitHub's web UI into res/raw.
 tasks.register('stagePromoVideo') {
     doLast {
-        def sourceVideo = file('src/main/res/Zhukhly_Bank_GIF_Loop_30s_9x16.mp4')
+        def sourceVideo = file('src/main/res/Zhukhly_Bank_GIF_Loop_30s_9x16-1.mp4')
         if (sourceVideo.exists()) {
             def targetDir = file('src/main/res/raw')
             targetDir.mkdirs()
