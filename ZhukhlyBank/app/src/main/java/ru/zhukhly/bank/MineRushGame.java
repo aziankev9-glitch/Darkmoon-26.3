@@ -83,7 +83,7 @@ public final class MineRushGame {
    if(!running||!bonusMode)return;
    steps[0]++;int block=mine.currentType();
    hp--;hits++;if(!mine.hit()&&hp>0){refresh();handler.postDelayed(this,160);return;}
-   double[] prizes={0.005,0.012,0.025,0.05,0.09,0.15,0.3};
+   double[] prizes={0.025,0.05,0.1,0.2,0.5,1,2};
    if(mine.tiles[mine.y][mine.x]<0)earned+=stake*prizes[block];int event=random.nextInt(21);
    if(event==0&&level<4){level++;hp+=10;status.setText("🧰 Верстак! Улучшение кирки +10 прочности");sound(1);}
    else if(event==1){hp+=12;status.setText("🔨 Наковальня! Восстановлено 12 прочности");sound(1);}
@@ -92,7 +92,7 @@ public final class MineRushGame {
    else if(steps[0]%4==0){status.setText("⛏ "+mine.blockName(block)+" · "+BLOCK_HP[block]+" ударов · собрано "+String.format(java.util.Locale.US,"%.0f",earned)+" ₽");sound(0);}
    mine.randomize();modeLabel.setText("💎 "+new String[]{"Деревянная","Железная","Золотая","Алмазная","Незеритовая"}[level]+" кирка · ❤️ "+Math.max(0,hp)+" · "+(System.currentTimeMillis()<enchantUntil?"✨ Ускорение":"обычная скорость"));
    refresh();
-   if(hp<=0||steps[0]>=180){if(jackpot)earned=stake*15000;finishBonus(jackpot);return;}
+   if(hp<=0||steps[0]>=180){if(jackpot)earned=stake*15000;else {double raw=earned/stake;int[] tiers={1,2,3,5,10,100,1000};int tier=0;for(int i=0;i<tiers.length;i++)if(raw>=tiers[i])tier=tiers[i];earned=stake*tier;}finishBonus(jackpot);return;}
    handler.postDelayed(this,System.currentTimeMillis()<enchantUntil?100:270);
   }};handler.postDelayed(ticker,500);
  }
@@ -100,10 +100,15 @@ public final class MineRushGame {
   running=false;bonusMode=false;if(ticker!=null)handler.removeCallbacks(ticker);
   final double prize=Math.max(0,Math.round(earned));modeLabel.setText("🏆 БОНУС ЗАВЕРШЁН");action.setText("⛏ Играть ещё");
   sound(jackpot?2:1);
-  new AlertDialog.Builder(a).setTitle(jackpot?"👑 ДЖЕКПОТ ×15000!":"🏆 Кирка сломалась!")
-   .setMessage("Собрано: "+String.format(java.util.Locale.US,"%,.0f",prize).replace(',',' ')+" виртуальных ₽\nМножитель: ×"+String.format(java.util.Locale.US,"%.2f",prize/Math.max(1,stake))+"\n\nЗабрать выигрыш?")
-   .setCancelable(false).setPositiveButton("💰 Забрать выигрыш",(d,w)->{wallet.credit(prize);status.setText("🏆 Начислено "+String.format(java.util.Locale.US,"%.0f",prize)+" ₽ на виртуальный баланс");refresh();})
-   .show();
+  Dialog win=new Dialog(a);LinearLayout panel=new LinearLayout(a);panel.setOrientation(1);panel.setPadding(dp(22),dp(24),dp(22),dp(22));GradientDrawable gold=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff342747,0xff10131e});gold.setCornerRadius(dp(24));gold.setStroke(dp(2),0xffd8ab58);panel.setBackground(gold);
+  add(panel,label(jackpot?"✦ ДЖЕКПОТ ✦":"✦ ИТОГ ДОБЫЧИ ✦",23,0xffffd783),60);
+  add(panel,label("×"+String.format(java.util.Locale.US,"%.2f",prize/Math.max(1,stake)),36,0xffffd783),70);
+  add(panel,label(String.format(java.util.Locale.US,"%,.0f",prize).replace(',',' ')+" ₽",30,0xffa6f5cf),70);
+  add(panel,label("Виртуальный выигрыш",13,0xffb8bbcf),36);
+  TextView claim=label("ЗАБРАТЬ ВЫИГРЫШ",17,0xff19131a);claim.setBackground(bg(0xffe7b75e,15));add(panel,claim,58);
+  claim.setOnClickListener(v->{claim.setEnabled(false);wallet.credit(prize);status.setText("Начислено "+String.format(java.util.Locale.US,"%.0f",prize)+" ₽");refresh();win.dismiss();});
+  win.setContentView(panel);win.setCancelable(false);if(win.getWindow()!=null)win.getWindow().setBackgroundDrawableResource(android.R.color.transparent);win.show();if(win.getWindow()!=null)win.getWindow().setLayout((int)(a.getResources().getDisplayMetrics().widthPixels*.88),-2);
+
  }
  class MineView extends View{
  final Paint p=new Paint(3); final int[][] tiles=new int[12][9], damage=new int[12][9]; final ArrayList<float[]> debris=new ArrayList<>();
@@ -115,7 +120,7 @@ public final class MineRushGame {
  void animateHit(){impact=SystemClock.uptimeMillis();invalidate();}
  boolean hit(){animateHit();int type=currentType();if(++damage[y][x]>=BLOCK_HP[type]){breakBlock();return true;}return false;}
  void breakBlock(){int type=currentType();tiles[y][x]=-1;for(int i=0;i<24;i++)debris.add(new float[]{x+.5f,y+.5f,(random.nextFloat()-.5f)*.25f,-random.nextFloat()*.22f,1,type});animateHit();}
- void advance(){int best=-1,bx=x,by=y;for(int r=0;r<12;r++)for(int k=0;k<9;k++){if(tiles[r][k]<0)continue;int score=100-Math.abs(r-y)*13-Math.abs(k-x)*11+(r>y?9:0)+random.nextInt(16);if(score>best){best=score;bx=k;by=r;}}if(best>=0){x=bx;y=by;}invalidate();}
+ void advance(){int best=-1,bx=x,by=y;for(int r=0;r<12;r++)for(int k=0;k<9;k++){if(tiles[r][k]<0||r<y)continue;int score=100-Math.abs(r-y-1)*28-Math.abs(k-x)*19+(r>y?45:0)+random.nextInt(18);if(score>best){best=score;bx=k;by=r;}}if(best>=0){x=bx;y=by;}else {for(int r=0;r<11;r++)for(int k=0;k<9;k++){tiles[r][k]=tiles[r+1][k];damage[r][k]=damage[r+1][k];}for(int k=0;k<9;k++){tiles[11][k]=random.nextInt(7);damage[11][k]=0;}y=11;py-=1;advance();}invalidate();}
  void box(Canvas c,float x,float y,float w,float h,int color){p.setColor(color);c.drawRect(x,y,x+w,y+h,p);}
  void pixel(Canvas c,int x,int y,int w,int h,int color){box(c,x,y,w,h,color);}
  void pick(Canvas c,float xx,float yy,float u){c.save();c.translate(xx,yy);c.rotate(angle);c.scale(u/16,u/16);c.translate(-8,-8);int metal=new int[]{0xffb77d42,0xffd8e1e7,0xffffd451,0xff49f5e3,0xffa18caa}[level];
