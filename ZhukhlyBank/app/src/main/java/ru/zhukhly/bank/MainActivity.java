@@ -220,45 +220,17 @@ public class MainActivity extends Activity {
    }).show();
  }
  void zhukhlyPay(){
- heading("ЖУХЛЫЙ  PAY");
- LinearLayout hero=new LinearLayout(this);hero.setOrientation(1);hero.setGravity(Gravity.CENTER);pad(hero,18,20,18,22);hero.setBackground(shape(0xfff8f9fb,25));add(body,hero);
- TextView brand=txt("Жухлый Pay",28,0xff14171d,true);brand.setGravity(Gravity.CENTER);add(hero,brand);
- TextView logo=txt("Ж",55,WHITE,true);logo.setGravity(Gravity.CENTER);logo.setBackground(shape(0xffc60928,22));
- LinearLayout.LayoutParams logoParams=new LinearLayout.LayoutParams(dp(96),dp(96));logoParams.gravity=Gravity.CENTER;logoParams.topMargin=dp(16);hero.addView(logo,logoParams);
- android.animation.ObjectAnimator spin=android.animation.ObjectAnimator.ofFloat(logo,"rotationY",0f,360f);spin.setDuration(2300);spin.setRepeatCount(android.animation.ValueAnimator.INFINITE);spin.setInterpolator(new android.view.animation.LinearInterpolator());spin.start();
- android.widget.FrameLayout runnerBox=new android.widget.FrameLayout(this);
- LinearLayout.LayoutParams runnerParams=new LinearLayout.LayoutParams(-1,dp(205));runnerParams.topMargin=dp(12);hero.addView(runnerBox,runnerParams);
- try{
-  final android.graphics.Bitmap sprite=android.graphics.BitmapFactory.decodeStream(getAssets().open("zh_pay_runner.webp"));
-  final android.widget.ImageView runnerImage=new android.widget.ImageView(this);
-  runnerImage.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
-  runnerBox.addView(runnerImage,new android.widget.FrameLayout.LayoutParams(-1,-1));
-  final int fw=sprite.getWidth()/3,fh=sprite.getHeight()/3;
-  final android.graphics.Bitmap[] frames=new android.graphics.Bitmap[9];
-  for(int frame=0;frame<9;frame++){
-   android.graphics.Bitmap original=android.graphics.Bitmap.createBitmap(sprite,(frame%3)*fw,(frame/3)*fh,fw,fh);
-   frames[frame]=transparentRunnerFrame(original);
-  }
-  runnerImage.setImageBitmap(frames[0]);
-  final android.animation.ValueAnimator running=android.animation.ValueAnimator.ofInt(0,8);
-  running.setDuration(1125);running.setRepeatCount(android.animation.ValueAnimator.INFINITE);
-  running.setInterpolator(new android.view.animation.LinearInterpolator());
-  running.addUpdateListener(animation->runnerImage.setImageBitmap(frames[(Integer)animation.getAnimatedValue()]));
-  runnerImage.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener(){
-   public void onViewAttachedToWindow(View v){runnerImage.post(()->{if(runnerImage.isAttachedToWindow()&&!running.isRunning())running.start();});}
-   public void onViewDetachedFromWindow(View v){running.cancel();}
-  });
-  runnerImage.post(()->{if(runnerImage.isAttachedToWindow()&&!running.isRunning())running.start();});
- }catch(Exception missingAsset){
-  TextView character=txt("🏃🏻‍♂️",86,RED,true);character.setGravity(Gravity.CENTER);
-  runnerBox.addView(character,new android.widget.FrameLayout.LayoutParams(-1,-1));
- }
- TextView logoCaption=txt("Ж PAY",23,0xffc60928,true);logoCaption.setGravity(Gravity.CENTER);add(hero,logoCaption);
- TextView prompt=txt("Поднеси телефон к терминалу",21,0xff14171d,true);prompt.setGravity(Gravity.CENTER);add(hero,prompt);
- TextView demo=txt("ДЕМО-РЕЖИМ · настоящий NFC не используется",12,0xff69717d,false);demo.setGravity(Gravity.CENTER);pad(demo,0,9,0,19);add(hero,demo);
- TextView card=txt("Ж  ЖУХЛЫЙ БАНК\nМИР  •••• 2026",21,WHITE,true);pad(card,22,24,22,24);card.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xfff02b42,0xff9e1231}));add(hero,card);
- TextView balanceToggle=txt("◉  Показать виртуальный баланс",14,0xff1c232c,true);balanceToggle.setGravity(Gravity.CENTER);pad(balanceToggle,0,20,0,8);add(hero,balanceToggle);
- balanceToggle.setOnClickListener(v->balanceToggle.setText("Баланс: "+rub(balance)));
+ heading("Ж PAY");
+ LinearLayout hero=new LinearLayout(this);hero.setOrientation(1);hero.setGravity(Gravity.CENTER);pad(hero,20,18,20,20);
+ GradientDrawable shell=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff301522,0xff101827,0xff111019});shell.setCornerRadius(dp(28));shell.setStroke(dp(1),0xffa54860);hero.setBackground(shell);add(body,hero);
+ TextView brand=txt("Ж  PAY   /   SIGNATURE",15,0xfff2c8a1,true);brand.setGravity(Gravity.CENTER);add(hero,brand);
+ FrameLayout stage=new FrameLayout(this);hero.addView(stage,new LinearLayout.LayoutParams(-1,dp(156)));
+ View pulse=new View(this){android.graphics.Paint p=new android.graphics.Paint(3);protected void onDraw(android.graphics.Canvas c){float x=getWidth()/2f,y=getHeight()/2f;float t=(android.os.SystemClock.uptimeMillis()%2400)/2400f;for(int k=0;k<3;k++){float q=(t+k/3f)%1f;p.setStyle(android.graphics.Paint.Style.STROKE);p.setStrokeWidth(dp(2));p.setColor(((int)((1-q)*110)<<24)|0xff496c);c.drawCircle(x,y,dp(42)+q*dp(30),p);}p.setStyle(android.graphics.Paint.Style.FILL);if(isAttachedToWindow())postInvalidateOnAnimation();}};stage.addView(pulse,new FrameLayout.LayoutParams(-1,-1));
+ TextView logo=txt("Ж",48,WHITE,true);logo.setGravity(Gravity.CENTER);GradientDrawable badge=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xffff496b,0xff8c1038});badge.setCornerRadius(dp(25));logo.setBackground(badge);FrameLayout.LayoutParams lp=new FrameLayout.LayoutParams(dp(82),dp(82),Gravity.CENTER);stage.addView(logo,lp);
+ TextView prompt=txt("Виртуальная оплата",24,WHITE,true);prompt.setGravity(Gravity.CENTER);add(hero,prompt);
+ TextView demo=txt("ДЕМО · NFC не используется · без реальных платежей",12,0xffe7a9b9,false);demo.setGravity(Gravity.CENTER);pad(demo,0,8,0,18);add(hero,demo);
+ TextView card=txt("Ж  SIGNATURE                         МИР\n\nОсновная карта  ·  •••• "+demoCardNumber(0).substring(demoCardNumber(0).length()-4),17,WHITE,true);pad(card,18,20,18,20);GradientDrawable cg=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xffb82750,0xff43182d,0xff161623});cg.setCornerRadius(dp(20));cg.setStroke(dp(1),0xffe4a47d);card.setBackground(cg);add(hero,card);
+ TextView balanceToggle=txt("◉  Показать виртуальный баланс",14,0xfff2c8a1,true);balanceToggle.setGravity(Gravity.CENTER);pad(balanceToggle,0,16,0,4);add(hero,balanceToggle);balanceToggle.setOnClickListener(v->balanceToggle.setText("Баланс: "+rub(balance)));
  TextView hint=txt("Выбери сумму ниже для имитации оплаты",13,MUTED,false);pad(hint,0,17,0,8);add(body,hint);
  EditText amount=field("Сумма виртуальной покупки, ₽",8194);
  EditText merchant=field("Название магазина (необязательно)",1);
