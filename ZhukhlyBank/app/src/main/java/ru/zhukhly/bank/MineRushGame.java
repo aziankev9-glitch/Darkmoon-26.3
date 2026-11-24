@@ -33,16 +33,16 @@ public final class MineRushGame {
  void sound(int kind){if(muted)return;try{ToneGenerator tone=new ToneGenerator(AudioManager.STREAM_MUSIC,55);tone.startTone(kind==2?ToneGenerator.TONE_PROP_BEEP2:kind==1?ToneGenerator.TONE_PROP_ACK:ToneGenerator.TONE_PROP_BEEP,kind==2?180:70);handler.postDelayed(tone::release,260);}catch(Exception ignored){}}
  void open(){
   dialog=new Dialog(a,android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-  ScrollView scroll=new ScrollView(a);scroll.setFillViewport(true);scroll.setBackgroundColor(0xff090e1b);
+  ScrollView scroll=new ScrollView(a);scroll.setFillViewport(true);scroll.setBackgroundColor(0xff100e19);
   layout=new LinearLayout(a);layout.setOrientation(1);layout.setPadding(dp(12),dp(15),dp(12),dp(18));scroll.addView(layout);
   TextView title=label("⛏  MINE RUSH    ✕",25,0xffffd25e);add(layout,title,55);title.setOnClickListener(v->dialog.dismiss());
   balanceLabel=label("",16,0xff87e8af);add(layout,balanceLabel,34);
   modeLabel=label("⛏ Обычная добыча · один блок",16,0xfff6f6fa);add(layout,modeLabel,36);
-  mine=new MineView(a);mine.setBackground(bg(0xff171b2b,16));add(layout,mine,430);
+  mine=new MineView(a);mine.setBackground(bg(0xff171b2b,16));add(layout,mine,510);
   status=label("Выбирай ставку и копай! Верстак BONUS запускает бесплатную шахту.",13,0xffc8d4e7);status.setPadding(dp(5),dp(8),dp(5),dp(8));add(layout,status,72);
   LinearLayout modes=new LinearLayout(a);add(layout,modes,54);
   TextView normal=label("⛏ КОПАТЬ",15,-1),bonus=label("💎 КУПИТЬ БОНУС",15,-1);
-  normal.setBackground(bg(0xff9a692c,12));bonus.setBackground(bg(0xff563c83,12));
+  normal.setBackground(bg(0xff9a692c,12));bonus.setBackground(bg(0xff57378c,12));
   LinearLayout.LayoutParams half=new LinearLayout.LayoutParams(0,dp(48),1);half.setMargins(dp(2),dp(2),dp(2),dp(2));modes.addView(normal,half);modes.addView(bonus,half);
   normal.setOnClickListener(v->{if(!running)startNormal();});bonus.setOnClickListener(v->{if(!running)buyBonus();});
   TextView spinTitle=label("СТАВКА ЗА ОДИН БЛОК",13,0xfff4cc8c);add(layout,spinTitle,34);
@@ -54,7 +54,7 @@ public final class MineRushGame {
   TextView buyTitle=label("ПОКУПКА БОНУСА · ВИРТУАЛЬНЫЕ ₽",13,0xfff4cc8c);add(layout,buyTitle,38);
   LinearLayout choices=new LinearLayout(a);choices.setOrientation(1);add(layout,choices,-2);
   for(int row=0;row<2;row++){LinearLayout r=new LinearLayout(a);add(choices,r,48);for(int col=0;col<4;col++){final int index=row*4+col;TextView b=label(String.format(java.util.Locale.US,"%,d",BONUS_COST[index]).replace(',',' '),12,-1);b.setBackground(bg(index==0?0xff956329:0xff283149,8));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(42),1);lp.setMargins(dp(2),dp(2),dp(2),dp(2));r.addView(b,lp);b.setOnClickListener(v->{bonusIndex=index;for(int j=0;j<choices.getChildCount();j++){LinearLayout rr=(LinearLayout)choices.getChildAt(j);for(int k=0;k<rr.getChildCount();k++)rr.getChildAt(k).setBackground(bg(j*4+k==bonusIndex?0xffb52649:0xff283149,8));}});}}
-  action=label("Начать копать · "+SPIN_BETS[spinIndex]+" ₽",17,-1);action.setBackground(bg(0xffb77b31,14));add(layout,action,58);
+  action=label("Начать копать · "+SPIN_BETS[spinIndex]+" ₽",17,-1);action.setBackground(bg(0xffc28a36,14));add(layout,action,58);
   action.setOnClickListener(v->{if(running)return;startNormal();});
   TextView rules=label("Демо-игра: только виртуальные средства. ×15000 — редкий приз (в среднем 1 на 100 бонусных запусков). Результаты случайны.",11,0xff91a3b9);add(layout,rules,65);
   TextView audio=label("🔊 Звуки: вкл / выкл",13,0xffd7d2ff);add(layout,audio,40);audio.setOnClickListener(v->{muted=!muted;audio.setText(muted?"🔇 Звуки выключены":"🔊 Звуки включены");});
@@ -74,7 +74,7 @@ public final class MineRushGame {
  void startBonus(double basis,boolean paid){
   if(ticker!=null)handler.removeCallbacks(ticker);
   stake=basis;earned=0;hp=60;level=0;hits=0;bonusMode=true;running=true;bonusCount++;
-  mine.advance();modeLabel.setText("💎 Бонусная шахта · прочность 60");
+  mine.randomize();modeLabel.setText("💎 Бонусная шахта · прочность 60");
   action.setText("⛏ Бонусная добыча идёт...");
   status.setText(paid?"Бонус куплен! Кирка начинает падение.":"Бесплатная бонусная шахта активирована!");
   final boolean jackpot=random.nextInt(100)==0; // 1% per bonus run, not a guarantee on the 100th.
@@ -90,7 +90,7 @@ public final class MineRushGame {
    else if(event==2){enchantUntil=System.currentTimeMillis()+5000;status.setText("✨ Зачарование! Ускорение на 5 секунд");sound(2);}
    else if(event==3){hp-=8;status.setText("💥 TNT! Потеряно 8 прочности");sound(2);}
    else if(steps[0]%4==0){status.setText("⛏ "+mine.blockName(block)+" · "+BLOCK_HP[block]+" ударов · собрано "+String.format(java.util.Locale.US,"%.0f",earned)+" ₽");sound(0);}
-   mine.randomize();modeLabel.setText("💎 "+new String[]{"Деревянная","Железная","Золотая","Алмазная","Незеритовая"}[level]+" кирка · ❤️ "+Math.max(0,hp)+" · "+(System.currentTimeMillis()<enchantUntil?"✨ Ускорение":"обычная скорость"));
+   mine.advance();modeLabel.setText("💎 "+new String[]{"Деревянная","Железная","Золотая","Алмазная","Незеритовая"}[level]+" кирка · ❤️ "+Math.max(0,hp)+" · "+(System.currentTimeMillis()<enchantUntil?"✨ Ускорение":"обычная скорость"));
    refresh();
    if(hp<=0||steps[0]>=180){if(jackpot)earned=stake*15000;else {double raw=earned/stake;int[] tiers={1,2,3,5,10,100,1000};int tier=0;for(int i=0;i<tiers.length;i++)if(raw>=tiers[i])tier=tiers[i];earned=stake*tier;}finishBonus(jackpot);return;}
    handler.postDelayed(this,System.currentTimeMillis()<enchantUntil?100:270);
@@ -112,29 +112,35 @@ public final class MineRushGame {
  }
  class MineView extends View{
  final Paint p=new Paint(3); final int[][] tiles=new int[12][9], damage=new int[12][9]; final ArrayList<float[]> debris=new ArrayList<>();
- int x=4,y=0; float px=4.5f,py=-.3f,angle=0; long impact=0; final int[] ore={0xff99918a,0xff292a30,0xffd6b69c,0xffffca48,0xff45f4e0,0xff55e88b,0xffa77566};
+ int depth=0; float popup=0; String effect=""; int x=4,y=0; float px=4.5f,py=-.3f,angle=0; long impact=0; final int[] ore={0xff99918a,0xff292a30,0xffd6b69c,0xffffca48,0xff45f4e0,0xff55e88b,0xffa77566};
  MineView(Context c){super(c);randomize();}
- void randomize(){debris.clear();for(int r=0;r<12;r++)for(int k=0;k<9;k++){int z=random.nextInt(100);tiles[r][k]=z<43?0:z<62?1:z<77?2:z<87?3:z<94?4:z<98?5:6;damage[r][k]=0;}x=4;y=0;px=4.5f;py=-.3f;invalidate();}
+ void randomize(){depth=0;popup=0;debris.clear();for(int r=0;r<12;r++)for(int k=0;k<9;k++){int z=random.nextInt(100);tiles[r][k]=z<43?0:z<62?1:z<77?2:z<87?3:z<94?4:z<98?5:6;damage[r][k]=0;}x=4;y=0;px=4.5f;py=-.3f;invalidate();}
  int currentType(){return Math.max(0,tiles[y][x]);}
  String blockName(int i){return new String[]{"Камень","Уголь","Железо","Золото","Алмаз","Изумруд","Древние обломки"}[i];}
  void animateHit(){impact=SystemClock.uptimeMillis();invalidate();}
  boolean hit(){animateHit();int type=currentType();if(++damage[y][x]>=BLOCK_HP[type]){breakBlock();return true;}return false;}
- void breakBlock(){int type=currentType();tiles[y][x]=-1;for(int i=0;i<24;i++)debris.add(new float[]{x+.5f,y+.5f,(random.nextFloat()-.5f)*.25f,-random.nextFloat()*.22f,1,type});animateHit();}
- void advance(){int best=-1,bx=x,by=y;for(int r=0;r<12;r++)for(int k=0;k<9;k++){if(tiles[r][k]<0||r<y)continue;int score=100-Math.abs(r-y-1)*28-Math.abs(k-x)*19+(r>y?45:0)+random.nextInt(18);if(score>best){best=score;bx=k;by=r;}}if(best>=0){x=bx;y=by;}else {for(int r=0;r<11;r++)for(int k=0;k<9;k++){tiles[r][k]=tiles[r+1][k];damage[r][k]=damage[r+1][k];}for(int k=0;k<9;k++){tiles[11][k]=random.nextInt(7);damage[11][k]=0;}y=11;py-=1;advance();}invalidate();}
+ void breakBlock(){int type=currentType();tiles[y][x]=-1;effect=blockName(type);popup=1;for(int i=0;i<36;i++)debris.add(new float[]{x+.5f,y+.5f,(random.nextFloat()-.5f)*.25f,-random.nextFloat()*.22f,1,type});animateHit();}
+ void advance(){int best=-1,bx=x,by=y;for(int r=0;r<12;r++)for(int k=0;k<9;k++){if(tiles[r][k]<0||r<y)continue;int score=100-Math.abs(r-y-1)*28-Math.abs(k-x)*19+(r>y?45:0)+random.nextInt(18);if(score>best){best=score;bx=k;by=r;}}if(best>=0){x=bx;y=by;}else {for(int r=0;r<11;r++)for(int k=0;k<9;k++){tiles[r][k]=tiles[r+1][k];damage[r][k]=damage[r+1][k];}for(int k=0;k<9;k++){tiles[11][k]=random.nextInt(7);damage[11][k]=0;}y=11;py-=1;depth++;advance();}invalidate();}
  void box(Canvas c,float x,float y,float w,float h,int color){p.setColor(color);c.drawRect(x,y,x+w,y+h,p);}
  void pixel(Canvas c,int x,int y,int w,int h,int color){box(c,x,y,w,h,color);}
  void pick(Canvas c,float xx,float yy,float u){c.save();c.translate(xx,yy);c.rotate(angle);c.scale(u/16,u/16);c.translate(-8,-8);int metal=new int[]{0xffb77d42,0xffd8e1e7,0xffffd451,0xff49f5e3,0xffa18caa}[level];
  for(int i=0;i<10;i++){pixel(c,3+i,12-i,3,3,0xff35251c);pixel(c,4+i,12-i,1,2,0xffba8149);}
  pixel(c,1,1,10,3,0xff24232a);pixel(c,3,0,8,2,metal);pixel(c,1,2,4,3,metal);pixel(c,9,2,4,3,metal);pixel(c,11,4,3,4,metal);pixel(c,2,2,7,1,0xfff2e3b7);c.restore();}
- @Override protected void onDraw(Canvas c){super.onDraw(c);float u=Math.min((getWidth()-dp(12))/9f,(getHeight()-dp(44))/12f);float ox=(getWidth()-u*9)/2,oy=dp(32);long now=SystemClock.uptimeMillis();float flash=Math.max(0,1-(now-impact)/220f);
- p.setShader(new LinearGradient(0,0,0,getHeight(),0xff292137,0xff080a10,Shader.TileMode.CLAMP));c.drawRect(0,0,getWidth(),getHeight(),p);p.setShader(null);
- for(int r=0;r<12;r++)for(int k=0;k<9;k++){float xx=ox+k*u,yy=oy+r*u;int t=tiles[r][k];if(t<0){box(c,xx,yy,u,u,0xff101018);continue;}c.save();c.translate(xx,yy);c.scale(u/16,u/16);Random tex=new Random(1234+r*91+k*37+t*331);for(int j=0;j<16;j+=2)for(int i=0;i<16;i+=2){int v=55+tex.nextInt(47);pixel(c,i,j,2,2,Color.rgb(v,v+2,v+7));}pixel(c,0,0,16,1,0xff92939a);pixel(c,0,1,1,14,0xff747781);pixel(c,0,15,16,1,0xff24252c);pixel(c,15,0,1,16,0xff252630);
- if(t>0)for(int i=0;i<5;i++){int dx=2+tex.nextInt(11),dy=2+tex.nextInt(11);pixel(c,dx,dy,4,3,0xff25242b);pixel(c,dx,dy,3,2,ore[t]);pixel(c,dx,dy,1,1,t==1?0xff54545a:0xffe9e1ca);}
+ @Override protected void onDraw(Canvas c){super.onDraw(c);float u=Math.min((getWidth()-dp(12))/9f,(getHeight()-dp(54))/12f);float ox=(getWidth()-u*9)/2,oy=dp(42);long now=SystemClock.uptimeMillis();float flash=Math.max(0,1-(now-impact)/220f);
+ p.setShader(new LinearGradient(0,0,0,getHeight(),0xff38241f,0xff080b14,Shader.TileMode.CLAMP));c.drawRect(0,0,getWidth(),getHeight(),p);p.setShader(null);
+ for(int r=0;r<12;r++)for(int k=0;k<9;k++){float xx=ox+k*u,yy=oy+r*u;int t=tiles[r][k];if(t<0){box(c,xx,yy,u,u,0xff100e17);box(c,xx+u*.12f,yy+u*.18f,u*.76f,u*.12f,0xff211a25);continue;}c.save();c.translate(xx,yy);c.scale(u/16,u/16);Random tex=new Random(1234+r*91+k*37+t*331);for(int j=0;j<16;j+=2)for(int i=0;i<16;i+=2){int v=65+tex.nextInt(55);pixel(c,i,j,2,2,Color.rgb(v,v+2,v+7));}pixel(c,0,0,16,1,0xff92939a);pixel(c,0,1,1,14,0xff747781);pixel(c,0,15,16,1,0xff24252c);pixel(c,15,0,1,16,0xff252630);
+ if(t>0)for(int i=0;i<7;i++){int dx=2+tex.nextInt(11),dy=2+tex.nextInt(11);pixel(c,dx,dy,4,3,0xff25242b);pixel(c,dx,dy,3,2,ore[t]);pixel(c,dx+1,dy+2,2,1,ore[t]);pixel(c,dx,dy,1,1,t==1?0xff54545a:0xffe9e1ca);}
  if(damage[r][k]>0){p.setColor(0xff16131a);p.setStrokeWidth(.8f);for(int i=0;i<damage[r][k]+2;i++){float a=tex.nextInt(16),b=tex.nextInt(16);c.drawLine(8,8,a,b,p);c.drawLine(a,b,a+2,b+3,p);}}if(k==x&&r==y&&flash>0)pixel(c,1,1,14,14,((int)(flash*75)<<24)|0xffffff);c.restore();}
  Iterator<float[]> it=debris.iterator();while(it.hasNext()){float[] d=it.next();d[0]+=d[2];d[1]+=d[3];d[3]+=.012f;d[4]-=.045f;if(d[4]<=0){it.remove();continue;}int color=(ore[(int)d[5]]&0xffffff)|((int)(d[4]*255)<<24);box(c,ox+d[0]*u,oy+d[1]*u,u*.12f,u*.12f,color);}
- px+=(x+.5f-px)*.23f;py+=(y+.25f-py)*.23f;if(running)angle+=13;pick(c,ox+px*u,oy+py*u,u*1.35f);
+ px+=(x+.5f-px)*.19f;py+=(y+.25f-py)*.19f;if(running)angle+=9;
+ float cx=ox+px*u,cy=oy+py*u-flash*u*.35f;
+ p.setShader(new RadialGradient(cx,cy,u*2.4f,new int[]{0x55ffbf58,0x00ffbf58},null,Shader.TileMode.CLAMP));c.drawCircle(cx,cy,u*2.4f,p);p.setShader(null);
+ pick(c,cx,cy,u*1.5f);
+ for(int side=0;side<2;side++){float tx=side==0?ox*.48f:getWidth()-ox*.48f;for(int k=0;k<3;k++){float ty=oy+u*(1+4*k);float flicker=(float)Math.sin(now/110.0+k)*.12f+.88f;p.setShader(new RadialGradient(tx,ty,Math.max(1,u*1.7f*flicker),new int[]{0x88ff9b37,0x00ff9b37},null,Shader.TileMode.CLAMP));c.drawCircle(tx,ty,u*1.7f,p);p.setShader(null);box(c,tx-2,ty,4,u*.42f,0xff815130);box(c,tx-3,ty-u*.16f,6,u*.2f,0xffffb74c);}}
+ if(popup>0){p.setColor(((int)(popup*255)<<24)|0xffdb83);p.setTextSize(dp(14));p.setTypeface(Typeface.DEFAULT_BOLD);p.setTextAlign(Paint.Align.CENTER);c.drawText(effect,cx,Math.max(dp(45),cy-u*(1.1f-popup*.5f)),p);popup=Math.max(0,popup-.035f);}
+
  box(c,dp(8),dp(8),getWidth()-dp(16),dp(6),0xff343044);box(c,dp(8),dp(8),(getWidth()-dp(16))*Math.min(1,Math.max(0,hp)/60f),dp(6),0xffe9b75b);
- p.setColor(0xffffe3aa);p.setTypeface(Typeface.DEFAULT_BOLD);p.setTextAlign(Paint.Align.CENTER);p.setTextSize(dp(12));c.drawText("ПРОЧНОСТЬ "+Math.max(0,hp)+"    •    "+String.format(java.util.Locale.US,"%.0f",earned)+" ₽",getWidth()/2f,dp(27),p);
- if(running||!debris.isEmpty()||flash>0)postInvalidateOnAnimation();}
+ p.setColor(0xffffe3aa);p.setTypeface(Typeface.DEFAULT_BOLD);p.setTextAlign(Paint.Align.CENTER);p.setTextSize(dp(12));c.drawText("ПРОЧНОСТЬ "+Math.max(0,hp)+"    •    "+String.format(java.util.Locale.US,"%.0f",earned)+" ₽",getWidth()/2f,dp(27),p);p.setTextSize(dp(10));c.drawText("ГЛУБИНА "+(depth+y)+" м",getWidth()/2f,dp(39),p);
+ if(running||!debris.isEmpty()||flash>0||popup>0)postInvalidateOnAnimation();}
  }
 }
