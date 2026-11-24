@@ -38,5 +38,12 @@ final class DocumentProcessor {
  Core.split(rgb,channels);for(Mat ch:channels){ch.convertTo(f,CvType.CV_32F);Core.multiply(f,gain,f);f.convertTo(ch,CvType.CV_8U);}Core.merge(channels,result);Imgproc.cvtColor(result,rgba,Imgproc.COLOR_RGB2RGBA);Bitmap out=Bitmap.createBitmap(src.getWidth(),src.getHeight(),Bitmap.Config.ARGB_8888);Utils.matToBitmap(rgba,out);return out;
  }catch(Exception e){return src;}finally{for(Mat m:channels)m.release();for(Mat m:new Mat[]{rgba,rgb,light,bg,smooth,gain,f,result})m.release();}
  }
+ static float[] preview(byte[] bytes,int w,int h){
+ if(!OpenCVLoader.initLocal()||bytes.length<w*h)return null;
+ Mat y=new Mat(h,w,CvType.CV_8UC1),small=new Mat(),rot=new Mat(),edge=new Mat(),hier=new Mat();List<MatOfPoint> contours=new ArrayList<>();
+ try{y.put(0,0,Arrays.copyOf(bytes,w*h));Core.rotate(y,rot,Core.ROTATE_90_CLOCKWISE);double scale=Math.min(1,480.0/Math.max(w,h));Imgproc.resize(rot,small,new Size(),scale,scale,Imgproc.INTER_AREA);Imgproc.GaussianBlur(small,small,new Size(5,5),0);Imgproc.Canny(small,edge,35,110);Imgproc.findContours(edge,contours,hier,Imgproc.RETR_LIST,Imgproc.CHAIN_APPROX_SIMPLE);double best=small.total()*.12;float[] result=null;
+ for(MatOfPoint c:contours){double area=Math.abs(Imgproc.contourArea(c));if(area<best||area>small.total()*.95)continue;MatOfPoint2f curve=new MatOfPoint2f(c.toArray()),poly=new MatOfPoint2f();try{Imgproc.approxPolyDP(curve,poly,.025*Imgproc.arcLength(curve,true),true);Point[] p=poly.toArray();if(p.length!=4)continue;MatOfPoint q=new MatOfPoint(p);boolean convex;try{convex=Imgproc.isContourConvex(q);}finally{q.release();}if(!convex)continue;result=new float[8];for(int i=0;i<4;i++){result[i*2]=(float)(p[i].x/small.cols());result[i*2+1]=(float)(p[i].y/small.rows());}best=area;}finally{curve.release();poly.release();}}
+ return result;}catch(Exception e){return null;}finally{for(Mat c:contours)c.release();for(Mat m:new Mat[]{y,small,rot,edge,hier})m.release();}
+ }
  static double dist(Point a,Point b){return Math.hypot(a.x-b.x,a.y-b.y);}
 }
