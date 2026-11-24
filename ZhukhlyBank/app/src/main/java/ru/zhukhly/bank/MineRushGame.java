@@ -3,6 +3,7 @@ package ru.zhukhly.bank;
 import android.app.*;
 import android.content.*;
 import android.graphics.*;
+import android.graphics.drawable.GradientDrawable;
 import android.media.*;
 import android.os.*;
 import android.view.*;
@@ -15,7 +16,7 @@ public final class MineRushGame {
  static final int[] BONUS_COST={500,1000,2000,3000,5000,10000,50000,100000};
  static final int[] SPIN_BETS={10,20,50,100,200,500,1000,2000};
  static final int[] MULT={1,2,3,5,10,100,1000,15000};
- static final int[] BLOCK_HP={1,2,3,4,5,6,8};
+ static final int[] BLOCK_HP={1,2,2,4,5,6,8};
  static final int[] COLORS={0xff818995,0xff515965,0xffb4a6a0,0xffeabf47,0xff42d8f1,0xff43db8d,0xff75516b};
  final MainActivity a; final Wallet wallet; final Random random=new Random();
  Dialog dialog; LinearLayout layout; TextView status, balanceLabel, action, modeLabel;
