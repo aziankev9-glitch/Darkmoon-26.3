@@ -305,28 +305,20 @@ public class MainActivity extends Activity {
  void cards(){settleAccounts();heading("Мои карты");renderCardCarousel();creditPanel();}
  void cardTransfer(){cardTransferFrom(0);}
  void cardTransferFrom(int selected){
-  heading("Перевод между своими картами");
-  int count=3+Math.min(extraCards,1);
-  int[] cardIds=extraCards>0?new int[]{0,1,2,3}:new int[]{0,1,2};
-  String[] names=new String[count];
-  for(int i=0;i<count;i++)names[i]=cardTitle(cardIds[i])+" · "+rub(cardBalance(cardIds[i]));
-  Spinner from=new Spinner(this),to=new Spinner(this);
-  ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,names);
-  from.setAdapter(adapter);to.setAdapter(adapter);
-  from.setSelection(Math.max(0,Math.min(selected,count-1)));to.setSelection(selected==0?1:0);
-  add(body,txt("С какой карты",15,WHITE,true));add(body,from);
-  add(body,txt("На какую карту",15,WHITE,true));add(body,to);
-  EditText amount=field("Сумма перевода, ₽",8194);
-  button("Перевести",()->{
-   try{
-    int source=cardIds[from.getSelectedItemPosition()],destination=cardIds[to.getSelectedItemPosition()];
-    double sum=Double.parseDouble(amount.getText().toString().replace(',','.'));
-    if(!Double.isFinite(sum)||sum<=0||source==destination||sum>cardBalance(source)||destination==2)throw new Exception();
-    adjustCardBalance(source,-sum);adjustCardBalance(destination,sum);
-    history.add(0,"Между картами: "+cardTitle(source)+" → "+cardTitle(destination)+" · "+rub(sum));
-    save();show("Карты");
-   }catch(Exception e){Toast.makeText(this,"Проверь сумму и карты. ",Toast.LENGTH_LONG).show();}
-  });
+  final Dialog dialog=new Dialog(this);
+  LinearLayout wrap=new LinearLayout(this);wrap.setOrientation(1);pad(wrap,18,20,18,18);wrap.setBackground(shape(PANEL,24));
+  add(wrap,txt("Между своими картами",22,WHITE,true));spaceIn(wrap,12);
+  final int count=3+Math.min(extraCards,1);final int[] ids={Math.max(0,Math.min(selected,count-1)),selected==0?1:0};
+  TextView from=txt("",16,WHITE,true),to=txt("",16,WHITE,true);
+  Runnable refresh=()->{from.setText(cardTitle(ids[0])+"   ▾\n"+rub(cardBalance(ids[0])));to.setText(cardTitle(ids[1])+"   ▾\n"+rub(cardBalance(ids[1])));from.setBackground(cardBackground(ids[0],cardThemeColor(ids[0])));to.setBackground(cardBackground(ids[1],cardThemeColor(ids[1])));};
+  for(int k=0;k<2;k++){final int side=k;TextView tile=k==0?from:to;add(wrap,txt(k==0?"С какой карты":"На какую карту",13,MUTED,true));pad(tile,15,15,15,15);add(wrap,tile);spaceIn(wrap,12);
+   tile.setOnClickListener(v->{String[] names=new String[count];for(int n=0;n<count;n++)names[n]=cardTitle(n)+" · "+rub(cardBalance(n));new AlertDialog.Builder(this).setTitle(side==0?"Выбери карту списания":"Выбери карту зачисления").setSingleChoiceItems(names,ids[side],(d,w)->{if(w==ids[1-side])ids[1-side]=ids[side];ids[side]=w;refresh.run();d.dismiss();}).setNegativeButton("Отмена",null).show();});}
+  refresh.run();TextView swap=txt("⇅  Поменять карты местами",14,WHITE,true);swap.setGravity(Gravity.CENTER);pad(swap,8,10,8,10);add(wrap,swap);swap.setOnClickListener(v->{int t=ids[0];ids[0]=ids[1];ids[1]=t;refresh.run();});
+  EditText amount=new EditText(this);amount.setTextColor(WHITE);amount.setHintTextColor(MUTED);amount.setHint("Сумма перевода, ₽");amount.setInputType(8194);add(wrap,amount);spaceIn(wrap,12);
+  TextView submit=txt("Перевести",17,WHITE,true);submit.setGravity(Gravity.CENTER);pad(submit,12,16,12,16);submit.setBackground(shape(RED,16));add(wrap,submit);
+  submit.setOnClickListener(v->{try{int source=ids[0],destination=ids[1];double sum=Math.round(Double.parseDouble(amount.getText().toString().replace(',','.'))*100)/100.0;if(!Double.isFinite(sum)||sum<=0||source==destination||sum>cardBalance(source))throw new Exception();if(destination==2){if(creditDebt<=0||sum>creditDebt)throw new Exception();adjustCardBalance(source,-sum);creditDebt=Math.max(0,Math.round((creditDebt-sum)*100)/100.0);if(creditDebt==0){creditAvailable=0;creditDue=0;lastPenaltyDay=0;creditPrincipal=0;}}else{adjustCardBalance(source,-sum);adjustCardBalance(destination,sum);}history.add(0,"Между картами: "+cardTitle(source)+" → "+cardTitle(destination)+" · "+rub(sum));save();dialog.dismiss();show("Карты");Toast.makeText(this,"Перевод выполнен",Toast.LENGTH_SHORT).show();}catch(Exception e){Toast.makeText(this,"Проверь сумму, баланс и задолженность кредитной карты",Toast.LENGTH_LONG).show();}});
+  TextView close=txt("Отмена",14,MUTED,false);close.setGravity(Gravity.CENTER);pad(close,8,12,8,4);add(wrap,close);close.setOnClickListener(v->dialog.dismiss());
+  dialog.setContentView(wrap);dialog.show();if(dialog.getWindow()!=null){dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);dialog.getWindow().setLayout(getResources().getDisplayMetrics().widthPixels-dp(26),-2);}
  }
  void creditPanelDialog(){chooseCredit();}
  void creditPanel(){
