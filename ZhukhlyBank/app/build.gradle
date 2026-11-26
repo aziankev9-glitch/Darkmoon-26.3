@@ -2,7 +2,7 @@ plugins { id 'com.android.application' }
 android {
  namespace 'ru.zhukhly.bank'
  compileSdk 35
- defaultConfig { applicationId 'ru.zhukhly.bank'; minSdk 26; targetSdk 35; versionCode 128; versionName '12.8' }
+ defaultConfig { applicationId 'ru.zhukhly.bank'; minSdk 26; targetSdk 35; versionCode 129; versionName '12.9' }
 }
 
 dependencies {
