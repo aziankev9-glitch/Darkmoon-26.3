@@ -1,4 +1,6 @@
 package ru.zhukhly.bank;
+import android.graphics.Paint;
+import android.graphics.Canvas;
 import android.app.*;
 import android.os.*;
 import android.content.*;
