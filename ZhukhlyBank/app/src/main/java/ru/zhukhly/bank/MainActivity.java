@@ -580,7 +580,6 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
   public boolean charge(double amount){if(amount<=0||MainActivity.this.balance<amount)return false;MainActivity.this.balance-=amount;history.add(0,"⛏ Mine Rush · ставка −"+rub(amount));save();return true;}
   public void credit(double amount){if(amount<=0)return;MainActivity.this.balance+=amount;history.add(0,"🏆 Mine Rush · выигрыш +"+rub(amount));save();}
  }));
- siteTile("","Жухлый Дрифтер","Ночная трасса · игра на реакцию",0xff701b39,0xff182536,"Играть",()->DriftGame.open(this));
  siteTile("🐶","Собачий домик","Игровой автомат · виртуальные ставки",0xff80502b,0xff492039,"Играть",()->slot());
  }
 
