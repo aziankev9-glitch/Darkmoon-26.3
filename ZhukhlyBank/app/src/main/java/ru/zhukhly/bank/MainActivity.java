@@ -575,6 +575,7 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
  void sites(){
  heading("Сервисы и развлечения");
  siteTile("▤","Жухлый сканер","Документы и PDF · через CamScanner",0xff145c59,0xff12263c,getPackageManager().getLaunchIntentForPackage("com.intsig.camscanner")!=null?"Открыть":"Скачать",()->openCamScanner());
+ siteTile("🛒","Жухлый продавец","Легенда DNS · Idle RPG",0xffe87518,0xff302019,"Играть",()->SellerGame.open(this));
  siteTile("⛏","MINE RUSH","Пиксельная шахта · виртуальная игра",0xff48366d,0xff142a49,"Играть",()->MineRushGame.open(this,new MineRushGame.Wallet(){
   public double balance(){return MainActivity.this.balance;}
   public boolean charge(double amount){if(amount<=0||MainActivity.this.balance<amount)return false;MainActivity.this.balance-=amount;history.add(0,"⛏ Mine Rush · ставка −"+rub(amount));save();return true;}
