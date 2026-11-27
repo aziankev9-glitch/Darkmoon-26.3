@@ -691,6 +691,11 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
   try{int rate=22050,count=rate*2;short[] pcm=new short[count];Random random=new Random(49);for(int i=0;i<count;i++){double t=i/(double)rate,v=0;for(int j=0;j<29;j++){double dt=t-j*.068;if(dt>=0&&dt<.23){double f=680+(j%9)*147;v+=.14*Math.exp(-dt*22)*(Math.sin(2*Math.PI*f*dt)+.4*Math.sin(2*Math.PI*f*2.32*dt)+.13*(random.nextDouble()*2-1));}}pcm[i]=(short)(Math.max(-1,Math.min(1,v))*17000);}int min=android.media.AudioTrack.getMinBufferSize(rate,android.media.AudioFormat.CHANNEL_OUT_MONO,android.media.AudioFormat.ENCODING_PCM_16BIT);android.media.AudioTrack track=new android.media.AudioTrack(android.media.AudioManager.STREAM_MUSIC,rate,android.media.AudioFormat.CHANNEL_OUT_MONO,android.media.AudioFormat.ENCODING_PCM_16BIT,Math.max(min,count*2),android.media.AudioTrack.MODE_STATIC);track.write(pcm,0,count);track.setLoopPoints(0,count,-1);sound[0]=track;track.play();}catch(Exception ignored){}
  }
  void slot(){
+ if(body==null||"dog_slot_open".equals(body.getTag()))return;
+ body.setTag("dog_slot_open");
+ body.removeAllViews();
+ if(body.getParent() instanceof ScrollView)((ScrollView)body.getParent()).scrollTo(0,0);
+ button("‹ Назад к сайтам",()->show("Сайты"));
  heading("🐾 СОБАЧИЙ ДВОР · 20 ЛИНИЙ");
  LinearLayout header=panel();
  header.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff744122,0xff281428}));
