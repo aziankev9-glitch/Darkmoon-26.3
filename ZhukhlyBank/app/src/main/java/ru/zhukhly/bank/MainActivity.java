@@ -584,6 +584,11 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
  siteTile("🐶","Собачий домик","Игровой автомат · виртуальные ставки",0xff80502b,0xff492039,"Играть",()->slot());
  }
 
+ static class DogRoof extends View {
+ final android.graphics.Paint p=new android.graphics.Paint(3);
+ DogRoof(Context c){super(c);}
+ protected void onDraw(android.graphics.Canvas c){super.onDraw(c);c.save();c.scale(getWidth()/340f,getHeight()/110f);android.graphics.Path roof=new android.graphics.Path();roof.moveTo(3,92);roof.quadTo(170,-65,337,92);roof.close();p.setShader(new android.graphics.LinearGradient(0,0,0,100,new int[]{0xffffa74b,0xffa43b17,0xff542411},null,android.graphics.Shader.TileMode.CLAMP));c.drawPath(roof,p);p.setShader(null);p.setColor(0xffffc75a);p.setStyle(android.graphics.Paint.Style.STROKE);p.setStrokeWidth(5);c.drawPath(roof,p);p.setStyle(android.graphics.Paint.Style.FILL);for(int i=0;i<3;i++){float x=110+i*60,y=i==1?24:37;p.setColor(0xff64351d);c.drawOval(x-24,y-15,x-8,y+23,p);c.drawOval(x+8,y-15,x+24,y+23,p);p.setColor(i==1?0xffb77a42:0xffe6b779);c.drawOval(x-17,y-17,x+17,y+20,p);p.setColor(0xffffffff);c.drawCircle(x-7,y-3,6,p);c.drawCircle(x+7,y-3,6,p);p.setColor(0xff241a18);c.drawCircle(x-6,y-2,3,p);c.drawCircle(x+6,y-2,3,p);c.drawOval(x-7,y+5,x+7,y+12,p);p.setColor(0xffef8190);c.drawOval(x-4,y+13,x+4,y+20,p);}p.setColor(0xff653018);c.drawRoundRect(26,65,314,105,13,13,p);p.setColor(0xffffc75a);p.setStyle(android.graphics.Paint.Style.STROKE);p.setStrokeWidth(2);c.drawRoundRect(26,65,314,105,13,13,p);p.setStyle(android.graphics.Paint.Style.FILL);p.setTypeface(android.graphics.Typeface.create("sans-serif-black",1));p.setTextAlign(android.graphics.Paint.Align.CENTER);p.setTextSize(25);c.drawText("СОБАЧИЙ ДВОР",170,93,p);c.restore();}
+ }
  static class SlotSymbolView extends View {
   int symbol=0; android.graphics.Paint p=new android.graphics.Paint(3); android.graphics.Canvas c; float w,h;
   SlotSymbolView(Context ctx){super(ctx);setLayerType(View.LAYER_TYPE_SOFTWARE,null);}
@@ -701,13 +706,13 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
  header.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff744122,0xff281428}));
  line(header,"🐾 Собачий двор","5 барабанов · 3 ряда · бонусные будки и WILD");
  TextView funds=txt("Игровой баланс: "+rub(balance),17,0xffffd58a,true);add(header,funds);
- LinearLayout board=panel();board.setBackground(shape(0xff392037,22));
+ LinearLayout board=panel();GradientDrawable wood=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xffa65a24,0xff45200e,0xff9b5427});wood.setCornerRadius(dp(18));wood.setStroke(dp(3),0xffffc65c);board.setBackground(wood);View roof=new DogRoof(this);board.addView(roof,new LinearLayout.LayoutParams(-1,dp(108)));LinearLayout reels=new LinearLayout(this);reels.setOrientation(0);board.addView(reels);
  SlotSymbolView[][] cells=new SlotSymbolView[3][5];
- for(int y=0;y<3;y++){LinearLayout row=new LinearLayout(this);add(board,row);for(int x=0;x<5;x++){
+ for(int x=0;x<5;x++){LinearLayout row=new LinearLayout(this);row.setOrientation(1);GradientDrawable rail=new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,new int[]{0xffe6a33f,0xff482414,0xff482414,0xffffd678});rail.setCornerRadius(dp(5));row.setBackground(rail);row.setPadding(dp(3),dp(3),dp(3),dp(3));reels.addView(row,new LinearLayout.LayoutParams(0,-2,1));for(int y=0;y<3;y++){
  SlotSymbolView cell=new SlotSymbolView(this);cell.setSymbol(0);
  GradientDrawable bg=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xffffd179,0xff71236e});
  bg.setCornerRadius(dp(12));bg.setStroke(dp(2),0xffffcf78);cell.setBackground(bg);cell.setElevation(dp(3));
- LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,dp(78),1);lp.setMargins(dp(2),dp(3),dp(2),dp(3));row.addView(cell,lp);cells[y][x]=cell;
+ LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,dp(78));lp.setMargins(dp(1),dp(2),dp(1),dp(2));row.addView(cell,lp);cells[y][x]=cell;
  }}
  TextView status=txt("🐕 Совпадения слева направо · 3–5 символов",14,0xffffd58a,true);status.setGravity(Gravity.CENTER);add(body,status);
  TextView bonus=txt("🏠 Три лапы на барабанах 1, 3, 5 запускают бонус",12,MUTED,false);bonus.setGravity(Gravity.CENTER);add(body,bonus);
@@ -735,14 +740,12 @@ com.google.zxing.integration.android.IntentResult r=com.google.zxing.integration
  if(!Double.isFinite(bet)||bet<1000||bet>500000)throw new Exception();
  double cost=bet*100;
  if(cost>balance){Toast.makeText(this,"Недостаточно виртуальных средств: нужно "+rub(cost),Toast.LENGTH_LONG).show();return;}
- new AlertDialog.Builder(this).setIcon(android.R.drawable.star_big_on).setTitle("🏠 ЗОЛОТОЙ БОНУС · СОБАЧИЙ ДВОР")
- .setMessage("Ставка: "+rub(bet)+"\nСтоимость: "+rub(cost)+" (100×)\n\n🎰 9–27 автоматических вращений\n🏠 Будки ×2 и ×3 остаются на поле\n✨ Выигрыши суммируются\n\nТолько виртуальные средства.")
- .setNegativeButton("Отмена",null).setPositiveButton("Купить",(d,w)->{
+ Dialog purchase=new Dialog(this);LinearLayout offer=new LinearLayout(this);offer.setOrientation(1);pad(offer,20,16,20,20);GradientDrawable gold=new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff51251c,0xff23152c});gold.setCornerRadius(dp(24));gold.setStroke(dp(2),0xffffcb68);offer.setBackground(gold);offer.addView(new DogRoof(this),new LinearLayout.LayoutParams(-1,dp(100)));TextView title=txt("ЗОЛОТОЙ БОНУС",23,0xffffd36e,true);title.setGravity(Gravity.CENTER);offer.addView(title);TextView details=txt("Ставка: "+rub(bet)+"\nСтоимость: "+rub(cost)+" (100×)\n\n9–27 автоматических вращений\nБудки ×2 и ×3 остаются на поле\nВыигрыши суммируются\n\nТолько виртуальные средства.",16,0xffffe5bc,false);pad(details,8,16,8,16);offer.addView(details);TextView confirm=txt("КУПИТЬ · "+rub(cost),18,0xff43220f,true);confirm.setGravity(Gravity.CENTER);pad(confirm,8,16,8,16);confirm.setBackground(shape(0xffffc55e,16));offer.addView(confirm);TextView cancel=txt("Отмена",16,0xffffe5bc,false);cancel.setGravity(Gravity.CENTER);pad(cancel,8,16,8,8);offer.addView(cancel);cancel.setOnClickListener(w->purchase.dismiss());confirm.setOnClickListener(w->{purchase.dismiss();
  balance-=cost;bonusTotal[0]=0;free[0]=9+rng.nextInt(19);bonusActive[0]=true;for(int[] rr:sticky)Arrays.fill(rr,0);bonusBet[0]=bet;getPreferences(0).edit().putInt("dogFree",free[0]).putLong("dogBonusBet",Double.doubleToLongBits(bet)).apply();
  history.add(0,"Покупка игрового бонуса · "+rub(cost));save();
  funds.setText("Игровой баланс: "+rub(balance));
  bonus.setText("🎁 Бесплатных вращений: "+free[0]);spin.setText("🎁 БЕСПЛАТНО · "+free[0]);spin.postDelayed(()->{if(!running[0]&&spin.isAttachedToWindow())spin.performClick();},900);
- }).show();
+ });purchase.setContentView(offer);if(purchase.getWindow()!=null){purchase.getWindow().setBackgroundDrawableResource(android.R.color.transparent);purchase.getWindow().setLayout(-1,-2);}purchase.show();if(purchase.getWindow()!=null)purchase.getWindow().setLayout((int)(getResources().getDisplayMetrics().widthPixels*.94),-2);
  }catch(Exception e){Toast.makeText(this,"Введите ставку от 1 000 до 150 000 ₽",Toast.LENGTH_SHORT).show();}});
  if(free[0]>0){bonusActive[0]=true;bonus.setText("🎁 Бесплатных вращений: "+free[0]);spin.setText("🎁 БЕСПЛАТНО · "+free[0]);spin.postDelayed(()->{if(!running[0]&&spin.isAttachedToWindow())spin.performClick();},1000);}
  final String[] symbols={"МОПС","ТАКСА","КОСТЬ","ОШЕЙНИК","РОТВЕЙЛЕР","A","K","Q","J","БУДКА","WILD\n2×","WILD\n3×"};
